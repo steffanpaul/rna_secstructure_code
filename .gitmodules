@@ -1,0 +1,3 @@
+[submodule "deepomics"]
+	path = deepomics
+	url = https://github.com/p-koo/deepomics.git
