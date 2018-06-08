@@ -75,7 +75,9 @@ def double_mutate(sequence, seq_length, dims):
 
 ''' ANALYSIS '''
 
-def fom_saliency(X, layer, alphabet, nntrainer, sess, figsize=(15,2)):
+
+
+def fom_saliency(X, layer, alphabet, nntrainer, sess, title='notitle', figsize=(15,2)):
 
     ''' requires that deepomics is being used and the appropriate architecture has already been constructed
     Must first initialize the session and set best parameters
@@ -104,13 +106,45 @@ def fom_saliency(X, layer, alphabet, nntrainer, sess, figsize=(15,2)):
     norm_heat_mut = utils.normalize_pwm(norm_heat_mut, factor=4)
 
     plt.figure(figsize=figsize)
+    if title != 'notitle':
+        plt.title(title)
     visualize.plot_seq_pos_saliency(np.squeeze(X).T, 
                                         norm_heat_mut,
                                         alphabet=alphabet, 
                                         nt_width=400) 
+    
+def fom_neursal(X, layer, alphabet, neuron, nntrainer, sess, title='notitle', figsize=(15,2)):
+    
+    #first mutate the sequence
+    X_mut = mutate(X, X.shape[1], X.shape[3])
 
+    #take all the mutations and assign them into a dict for deepomics
+    mutations = {'inputs': X_mut, 'targets': np.ones((X_mut.shape[0], 1))}
+    #Get the neurons score for the mutations
+    mut_predictions = nntrainer.get_activations(sess, mutations, layer=layer)[:,neuron]
 
-def som_average(X, nntrainer, sess):
+    #take the WT and put it into a dict for deepomics
+    WT = {'inputs': X, 'targets': np.ones((X.shape[0], 1))}
+    #Get output or logits activations for the WT sequence
+    dense = nntrainer.get_activations(sess, WT, layer=layer)
+
+    #shape the predictions of the mutations into the shape of a heatmap
+    heat_mut = mut_predictions.reshape(X.shape[1],4).T
+    
+    #normalize the heat map rearrangement by minusing it by the true prediction score of that test sequence
+    norm_heat_mut = heat_mut - dense[:, neuron]
+    norm_heat_mut = utils.normalize_pwm(norm_heat_mut, factor=4)
+
+    plt.figure(figsize=figsize)
+    if title != 'notitle':
+        plt.title(title)
+    visualize.plot_seq_pos_saliency(np.squeeze(X).T, 
+                                        norm_heat_mut,
+                                        alphabet=alphabet, 
+                                        nt_width=400) 
+    
+    
+def som_average(X, savepath, nntrainer, sess, progress='on'):
 
     num_summary, seqlen, _, dims = X.shape
 
@@ -135,10 +169,19 @@ def som_average(X, nntrainer, sess):
         sum_mut2_scores += mut2_scores
 
         epoch_endtime = time.time()
+        
+        if progress == 'on':
 
-        print ('Epoch duration =' + sectotime(epoch_endtime -epoch_starttime))
-        print ('Cumulative duration =' + sectotime(epoch_endtime - starttime))
-        print ()
+            print ('Epoch duration =' + sectotime(epoch_endtime -epoch_starttime))
+            print ('Cumulative duration =' + sectotime(epoch_endtime - starttime))
+            print ()
+            
+    if progress == 'off':
+        print ('----------------Summing complete----------------')
+        
+    # Save the summed array for future use
+    np.save(savepath, sum_mut2_scores)
+    print ('Saving scores to ' + savepath)
 
     return (sum_mut2_scores)
 
@@ -190,7 +233,7 @@ def square_holplot(mutations, num, alphabet, limits=(0., 1.0), cmap ='Blues', fi
             
             
             
-def symlinear_holplot(mutations, figplot, alphabet, limits=(0., 1.), cmap ='Blues', figsize=(10,7), lines=True):
+def symlinear_holplot(mutations, figplot, alphabet, start=0, limits=(0., 1.), cmap ='Blues', figsize=(10,7), lines=True):
 
     if alphabet == 'rna':
         nuc = ['A', 'C', 'G', 'U']
@@ -198,7 +241,7 @@ def symlinear_holplot(mutations, figplot, alphabet, limits=(0., 1.), cmap ='Blue
         nuc = ['A', 'C', 'G', 'T']
         
     row, col = figplot
-    end = mutations.shape[0] - 1
+    end = start + 2*row*col
     
     if lines == True:
         linewidths = 0.1
