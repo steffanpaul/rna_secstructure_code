@@ -144,7 +144,7 @@ def fom_neursal(X, layer, alphabet, neuron, nntrainer, sess, title='notitle', fi
                                         nt_width=400) 
     
     
-def som_average(X, savepath, nntrainer, sess, progress='on'):
+def som_average(X, savepath, nntrainer, sess, progress='on', save=True):
 
     num_summary, seqlen, _, dims = X.shape
 
@@ -152,7 +152,9 @@ def som_average(X, savepath, nntrainer, sess, progress='on'):
     starttime = time.time()
 
     for ii in range(num_summary):
-        print (ii)
+        if progress == 'on':
+            print (ii)
+        
         epoch_starttime = time.time()
 
         #mutate the sequence
@@ -180,8 +182,9 @@ def som_average(X, savepath, nntrainer, sess, progress='on'):
         print ('----------------Summing complete----------------')
         
     # Save the summed array for future use
-    np.save(savepath, sum_mut2_scores)
-    print ('Saving scores to ' + savepath)
+    if save == True:
+        np.save(savepath, sum_mut2_scores)
+        print ('Saving scores to ' + savepath)
 
     return (sum_mut2_scores)
 
