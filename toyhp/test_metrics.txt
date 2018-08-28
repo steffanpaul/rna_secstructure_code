@@ -1,0 +1,37 @@
+loading model from:  ../../results/toyhp/mlp_large_best.ckpt
+  test  loss:       0.00497
+  test  accuracy:   1.00000+/-0.00000
+  test  auc-roc:    1.00000+/-0.00000
+  test  auc-pr:     1.00000+/-0.00000
+
+loading model from:  ../../results/toyhp/mlp_med_best.ckpt
+  test  loss:       0.00366
+  test  accuracy:   1.00000+/-0.00000
+  test  auc-roc:    1.00000+/-0.00000
+  test  auc-pr:     1.00000+/-0.00000
+
+loading model from:  ../../results/toyhp/mlp_small_best.ckpt
+  test  loss:       0.00654
+  test  accuracy:   0.99940+/-0.00000
+  test  auc-roc:    0.99973+/-0.00000
+  test  auc-pr:     0.99952+/-0.00000
+
+loading model from:  ../../results/toyhp/resbind_large_best.ckpt
+  test  loss:       0.00705
+  test  accuracy:   0.99993+/-0.00000
+  test  auc-roc:    1.00000+/-0.00000
+  test  auc-pr:     1.00000+/-0.00000
+
+loading model from:  ../../results/toyhp/resbind_med_best.ckpt
+  test  loss:       0.04785
+  test  accuracy:   0.99157+/-0.00000
+  test  auc-roc:    0.99972+/-0.00000
+  test  auc-pr:     0.99963+/-0.00000
+
+loading model from:  ../../results/toyhp/resbind_small_best.ckpt
+  test  loss:       0.19687
+  test  accuracy:   0.93267+/-0.00000
+  test  auc-roc:    0.98362+/-0.00000
+  test  auc-pr:     0.97716+/-0.00000
+
+

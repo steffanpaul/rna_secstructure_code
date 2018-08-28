@@ -1,3 +1,9 @@
 [submodule "deepomics"]
 	path = deepomics
 	url = https://github.com/p-koo/deepomics.git
+[submodule "trna/RNN/deepomics"]
+	path = trna/RNN/deepomics
+	url = https://github.com/p-koo/deepomics
+[submodule "riboswitch/RNN/deepomics"]
+	path = riboswitch/RNN/deepomics
+	url = https://github.com/p-koo/deepomics
