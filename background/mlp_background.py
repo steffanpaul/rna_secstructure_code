@@ -291,7 +291,7 @@ for t in trials:
       plt.savefig(som_file)
       plt.close()
 
-
+'''
       blocklen = np.sqrt(np.product(meanhol_mut2.shape)).astype(int)
       S = np.zeros((blocklen, blocklen))
       i,j,k,l = meanhol_mut2.shape
@@ -311,3 +311,4 @@ for t in trials:
       som_file = os.path.join(img_folder, som_file)
       plt.savefig(som_file)
       plt.close()
+'''

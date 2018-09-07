@@ -10,41 +10,11 @@ import mutagenesisfunctions as mf
 import time as time
 
 
-
-def seq_bunchshuffle(Xpos, numdata, seqlen, bunchsize=(10, 75)):
-
-    #n = the number of bunches
-    smallbunch, largebunch = bunchsize
-    n_upper = seqlen//smallbunch
-    n_lower = seqlen//largebunch
-
-    Xshuffle = np.zeros((np.shape(Xpos)))
-    ns = []
-    for seq in range(numdata):
-        Xcopy = np.copy(Xpos[seq])
-
-        n = np.random.randint(n_lower, n_upper)
-
-        bunchidx = [i*(seqlen//n) for i in range(n)]
-        bunchidx.append(seqlen)
-
-        start=0
-        randidx = np.random.permutation(n)
-        for i in range(n):
-            idx = randidx[i]
-            space = bunchidx[idx+1]-bunchidx[idx]
-            Xshuffle[seq, start:start+space, :, :] = Xcopy[bunchidx[idx]:bunchidx[idx+1], :, :]
-            start = start + space
-            
-    return (Xshuffle)
-
-
-modelarch_list = ['riboswitch']#['glna', 'trna', 'riboswitch']
-simalign_file_list = ['../../data_RFAM/riboswitch_100k.sto']
-#simalign_file_list = ['../../data_RFAM/glnAsim_100k.sto', '../../data_RFAM/trnasim_100k.sto', '../../data_RFAM/riboswitch_100k.sto']
+modelarch_list = ['glna', 'trna', 'riboswitch']
+simalign_file_list = ['../../data_RFAM/glnAsim_100k.sto', '../../data_RFAM/trnasim_100k.sto', '../../data_RFAM/riboswitch_100k.sto']
 modeliters = zip(modelarch_list, simalign_file_list)
 
-shufflepercent_list = [0., 0.25, 0.5, 0.75, 1.0]
+gappercent_list = [0., 0.25, 0.5, 0.75, 1.0]
 
 for modelarch, simalign_file in modeliters:
     print ('---------------%s-----------------'%(modelarch))
@@ -67,26 +37,37 @@ for modelarch, simalign_file in modeliters:
     print ('Making neg control emitted from frequency profile: '
            + mf.sectotime(time.time() - starttime))
 
+    ################ MAKE NEG WITH GAPCOPIES #######################
+    #Make negative controls
     starttime = time.time()
-
-    ################ SHUFFLE #######################
-    #Create a negative control of randomly suffled sequences
     numdata, seqlen, _, dims = Xpos.shape
     dims = dims-1
+    SS = mf.getSSconsensus(simalign_file)
+    Xnegrandom = mf.seq_generator_gaps(SS, numdata, seqlen, dims, pgaps=(0.,0.))
+    print ('Random sequence generation completed in: ' + mf.sectotime(time.time() - starttime))
 
-    Xnegshuffle = seq_bunchshuffle(Xpos, numdata, seqlen)
+    starttime = time.time()
 
-    print ('Making neg control as shuffled pos: ' + mf.sectotime(time.time() - starttime))
+    #insert gaps in the negative control where there were gaps in the positive control
+    for s in range(Xpos.shape[0]):
+        gapidxcopy = np.where(Xpos[s,:,0,4]==1.)[0]
+        Xnegrandom[s, gapidxcopy, :, :] = np.array([0., 0. , 0. ,0., 1.])
+        
+    print ('Making neg control w/ copy of pos control gaps: '
+           + mf.sectotime(time.time() - starttime))
+
+    #check
+    if np.sum(Xnegrandom[:,:,:,4]) == np.sum(Xpos[:,:,:,4]):
+        print ('Successful gap addition')
 
     ################ COMBINE ######################
-    for shuff in shufflepercent_list:
-        print ('=================shufflepercent: %s================='%(str(shuff)))
-        #percent of shuffled negative controls
-        shufflepercent = shuff
+    for gap in gappercent_list:
+        print ('=================gappercent: %s================='%(str(gap)))
+        #percent of negative controls with gaps
         numdata, seqlen, _, dims = Xpos.shape
         dims = dims-1
-        shuffleportion = np.random.permutation(numdata)[:int(numdata*shufflepercent)]
-        Xneg = np.concatenate((Xnegprofile[:int(numdata*(1-shufflepercent))], Xnegshuffle[shuffleportion]))
+        gapportion = np.random.permutation(numdata)[:int(numdata*gap)]
+        Xneg = np.concatenate((Xnegprofile[:int(numdata*(1-gapportion))], Xnegrandom[gapportion]))
 
         #rejoin pos and neg controls
         X_data = np.concatenate((Xpos, Xneg), axis=0)
@@ -102,7 +83,7 @@ for modelarch, simalign_file in modeliters:
 
         ################ SAVE #######################
         #Save dictionaries into h5py files
-        savepath = '../../data_background/%s_100k_sh%0.f.hdf5'%(modelarch, shuff*100)
+        savepath = '../../data_background/%s_100k_gap%0.f.hdf5'%(modelarch, shuff*100)
         with h5py.File(savepath, 'w') as f:
             f.create_dataset('X_data', data=X_data.astype(np.float32), compression='gzip')
             f.create_dataset('Y_data', data=Y_data.astype(np.float32), compression='gzip')

@@ -43,8 +43,8 @@ if '--somvis' in sys.argv:
 
 #---------------------------------------------------------------------------------------------------------------------------------
 '''DEFINE LOOP'''
-trials = ['riboswitch']#['glna', 'trna', 'riboswitch']
-shufflepercent_list = [0., 0.25, 0.5, 0.75, 1.0]
+trials = ['glna']#, 'trna', 'riboswitch']
+gappercent_list = [0., 0.25, 0.5, 0.75, 1.0]
 
 datafiles = {'glna': ['glna_100k_d8.hdf5', '../../data_RFAM/glnAsim_100k.sto'], 
               'trna': ['trna_100k_d4.hdf5', '../../data_RFAM/trnasim_100k.sto'],
@@ -56,7 +56,7 @@ exp_data = 'data_background'
 img_folder = 'Images'
 
 for t in trials:
-  for shuff in shufflepercent_list:
+  for gap in gappercent_list:
 
 
     #---------------------------------------------------------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ for t in trials:
     starttime = time.time()
 
     #Open data from h5py
-    filename = '%s_100k_sh%.0f.hdf5'%(t, shuff*100)
+    filename = '%s_100k_gap%.0f.hdf5'%(t, gap*100)
     data_path = os.path.join('../..', exp_data, filename)
     with h5py.File(data_path, 'r') as dataset:
         X_data = np.array(dataset['X_data'])
@@ -123,8 +123,8 @@ for t in trials:
     '''SAVE PATHS AND PARAMETERS'''
     params_results = '../../results'
 
-    modelarch = 'resbind'
-    trial = t + '_sh%.0f'%(shuff*100)
+    modelarch = 'mlp'
+    trial = t + '_gap%.0f'%(gap*100)
     modelsavename = '%s_%s'%(modelarch, trial)
 
 
@@ -133,41 +133,26 @@ for t in trials:
 
     def cnn_model(input_shape, output_shape):
 
+
       # create model
       layer1 = {'layer': 'input', #41
               'input_shape': input_shape
               }
-      layer2 = {'layer': 'conv1d',
-              'num_filters': 96,
-              'filter_size': input_shape[1]-29,
-              'norm': 'batch',
-              'activation': 'relu',
-              'dropout': 0.3,
-              'padding': 'VALID',
-              }
-      layer3 = {'layer': 'conv1d_residual',
-              'filter_size': 5,
-              'function': 'relu',
-              'dropout_block': 0.1,
-              'dropout': 0.3,
-              'mean_pool': 10,
-              }
-      
-      layer4 = {'layer': 'dense',        # input, conv1d, dense, conv1d_residual, dense_residual, conv1d_transpose,
-                                      # concat, embedding, variational_normal, variational_softmax, + more
-            'num_units': 196,
-            'norm': 'batch',          # if removed, automatically adds bias instead
-            'activation': 'relu',     # or leaky_relu, prelu, sigmoid, tanh, etc
-            'dropout': 0.5,           # if removed, default is no dropout
+
+      layer2 = {'layer': 'dense',        # input, conv1d, dense, conv1d_residual, dense_residual, conv1d_transpose,
+                                          # concat, embedding, variational_normal, variational_softmax, + more
+                'num_units': 44,
+                'norm': 'batch',          # if removed, automatically adds bias instead
+                'activation': 'relu',     # or leaky_relu, prelu, sigmoid, tanh, etc
+                'dropout': 0.5,           # if removed, default is no dropout
                }
 
-      
-      layer5 = {'layer': 'dense',
+      layer3 = {'layer': 'dense',
               'num_units': output_shape[1],
               'activation': 'sigmoid'
               }
 
-      model_layers = [layer1, layer2, layer3, layer4, layer5]
+      model_layers = [layer1, layer2, layer3]
 
       # optimization parameters
       optimization = {"objective": "binary",
@@ -213,7 +198,7 @@ for t in trials:
       fit.train_minibatch(sess, nntrainer, data, 
                         batch_size=100, 
                         num_epochs=100,
-                        patience=30, 
+                        patience=40, 
                         verbose=2, 
                         shuffle=True, 
                         save_all=False)
@@ -294,11 +279,11 @@ for t in trials:
 
       C = (norm_meanhol_mut2*bpfilter)
       C = np.sum((C).reshape(numug,numug,dims*dims), axis=2)
-      #C = C - np.mean(C)
-      #C = C/np.max(C)
+      C = C - np.mean(C)
+      C = C/np.max(C)
 
       plt.figure(figsize=(8,6))
-      sb.heatmap(C,vmin=None, cmap='RdPu', linewidth=0.0)
+      sb.heatmap(C,vmin=None, cmap='Blues', linewidth=0.0)
       plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
 
       som_file = modelsavename + 'SoM_bpfilter' + '.png'
