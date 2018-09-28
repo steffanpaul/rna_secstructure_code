@@ -39,9 +39,8 @@ def seq_bunchshuffle(Xpos, numdata, seqlen, bunchsize=(10, 75)):
     return (Xshuffle)
 
 
-modelarch_list = ['riboswitch']#['glna', 'trna', 'riboswitch']
-simalign_file_list = ['../../data_RFAM/riboswitch_100k.sto']
-#simalign_file_list = ['../../data_RFAM/glnAsim_100k.sto', '../../data_RFAM/trnasim_100k.sto', '../../data_RFAM/riboswitch_100k.sto']
+modelarch_list = ['glna', 'trna', 'riboswitch']
+simalign_file_list = ['../../data_RFAM/glnAsim_100k.sto', '../../data_RFAM/trnasim_100k.sto', '../../data_RFAM/riboswitch_100k.sto']
 modeliters = zip(modelarch_list, simalign_file_list)
 
 shufflepercent_list = [0., 0.25, 0.5, 0.75, 1.0]
