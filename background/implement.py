@@ -1,6 +1,7 @@
 import os
 from subprocess import call
 
-
-#call(['python', 'background_factory.py'])
-call(['python', 'mlp_background.py', '--train', '--test', '--somcalc', '--somvis'])
+from subprocess import call
+call(['python', 'background_gap_factory.py'])
+call(['python', 'mlp_background_gap.py', '--train', '--test', '--somcalc', '--somvis'])
+call(['python', 'resbind_background_gap.py', '--train', '--test', '--somcalc', '--somvis'])

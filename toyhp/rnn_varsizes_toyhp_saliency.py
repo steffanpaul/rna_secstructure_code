@@ -325,7 +325,7 @@ for t in trials:
                                 k += 1
 
                 # get second order mutagenesis score
-                X_mut = [x for x in X_mut]
+                X_mut = [x for x in X_mut] #convert to lists because this is what the RNN code is used to
                 mut_scores = []
                 batches = helper.batch_generator(X_mut, batch_size=512, MAX=None, shuffle_data=False)
                 for i, batch in enumerate(batches):

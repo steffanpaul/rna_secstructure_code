@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import numpy as np
 from Bio import AlignIO
-import sys, h5py
+import os, sys, h5py
 sys.path.append('../../..')
 import mutagenesisfunctions as mf
 import time as time
@@ -28,14 +28,24 @@ for modelarch, simalign_file in modeliters:
     starttime = time.time()
 
     ################ PROFILE ##############################
-    #Emit sequences from the positive control profile
-    Xprofile = np.squeeze(np.mean(Xpos, axis=0))
+    #Open data from h5py
     numdata, seqlen, _, dims = Xpos.shape
     dims = dims-1
-    Xnegprofile = mf.seq_generator_profile(Xprofile, numdata, seqlen, dims)
 
-    print ('Making neg control emitted from frequency profile: '
-           + mf.sectotime(time.time() - starttime))
+    #This opens the data made from the shuffle experiment and pulls out the 100% profile emmitted negative control ([:numdata])
+    filename = '%s_100k_sh%.0f.hdf5'%(modelarch, 0*100)
+    data_path = os.path.join('../..', 'data_background', filename)
+    with h5py.File(data_path, 'r') as dataset:
+        Xnegprofile = np.array(dataset['X_data'])[numdata:]
+
+    #Emit sequences from the positive control profile
+    #Xprofile = np.squeeze(np.mean(Xpos, axis=0))
+    #numdata, seqlen, _, dims = Xpos.shape
+    #dims = dims-1
+    #Xnegprofile = mf.seq_generator_profile(Xprofile, numdata, seqlen, dims)
+
+    #print ('Making neg control emitted from frequency profile: '
+    #       + mf.sectotime(time.time() - starttime))
 
     ################ MAKE NEG WITH GAPCOPIES #######################
     #Make negative controls
@@ -52,7 +62,6 @@ for modelarch, simalign_file in modeliters:
     for s in range(Xpos.shape[0]):
         gapidxcopy = np.where(Xpos[s,:,0,4]==1.)[0]
         Xnegrandom[s, gapidxcopy, :, :] = np.array([0., 0. , 0. ,0., 1.])
-        
     print ('Making neg control w/ copy of pos control gaps: '
            + mf.sectotime(time.time() - starttime))
 
@@ -67,7 +76,7 @@ for modelarch, simalign_file in modeliters:
         numdata, seqlen, _, dims = Xpos.shape
         dims = dims-1
         gapportion = np.random.permutation(numdata)[:int(numdata*gap)]
-        Xneg = np.concatenate((Xnegprofile[:int(numdata*(1-gapportion))], Xnegrandom[gapportion]))
+        Xneg = np.concatenate((Xnegprofile[:int(numdata*(1-gap))], Xnegrandom[gapportion]))
 
         #rejoin pos and neg controls
         X_data = np.concatenate((Xpos, Xneg), axis=0)
@@ -83,7 +92,7 @@ for modelarch, simalign_file in modeliters:
 
         ################ SAVE #######################
         #Save dictionaries into h5py files
-        savepath = '../../data_background/%s_100k_gap%0.f.hdf5'%(modelarch, shuff*100)
+        savepath = '../../data_background/%s_100k_gap%0.f.hdf5'%(modelarch, gap*100)
         with h5py.File(savepath, 'w') as f:
             f.create_dataset('X_data', data=X_data.astype(np.float32), compression='gzip')
             f.create_dataset('Y_data', data=Y_data.astype(np.float32), compression='gzip')

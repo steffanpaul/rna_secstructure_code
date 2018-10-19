@@ -43,7 +43,7 @@ if '--somvis' in sys.argv:
 
 #---------------------------------------------------------------------------------------------------------------------------------
 '''DEFINE LOOP'''
-trials = ['glna']#, 'trna', 'riboswitch']
+trials = ['glna', 'trna', 'riboswitch']
 gappercent_list = [0., 0.25, 0.5, 0.75, 1.0]
 
 datafiles = {'glna': ['glna_100k_d8.hdf5', '../../data_RFAM/glnAsim_100k.sto'], 
