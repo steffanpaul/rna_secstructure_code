@@ -27,7 +27,10 @@ WRITE = False
 FOM = False
 SOMCALC = False
 SOMVIS = False
+TRANSFER = False
 
+if '--transfer' in sys.argv:
+  TRANSFER = True
 if '--train' in sys.argv:
   TRAIN = True
 if '--test' in sys.argv:
@@ -58,24 +61,31 @@ starttime = time.time()
 
 #Open data from h5py
 exp_data = 'data_toypk'
-filename = 'toypkhp_50_d1.hdf5'
+filename = 'toypkhp_10_d1.hdf5'
 data_path = os.path.join('../../..', exp_data, filename)
+if TRANSFER:
+    ext = '_pkhp'
+else:
+    ext = '_hp'
 with h5py.File(data_path, 'r') as dataset:
-    X_data = np.array(dataset['X_data'])
+    X_data = np.array(dataset['X_data%s'%(ext)])
     Y_data = np.array(dataset['Y_data'])
+print ('X_data%s'%(ext))
+
+X_data = np.expand_dims(X_data, axis=2)
     
 numdata, seqlen, _, dims = X_data.shape
-dims = dims-1
-
-#remove gaps from sequences
-ungapped = True
-if ungapped:
-    X_data = X_data[:, :, :, :dims]
     
 # get validation and test set from training set
-train_frac = trainportion
-valid_frac = 0.1
-test_frac = 1-trainportion-valid_frac
+if not TRANSFER: #set the proportions for pretransfer 
+    train_frac = 0.5
+    valid_frac = 0.2
+    test_frac = 0.3
+if TRANSFER:
+    train_frac = 0.8
+    valid_frac = 0.1
+    test_frac = 0.1
+
 N = numdata
 split_1 = int(N*(1-valid_frac-test_frac))
 split_2 = int(N*(1-test_frac))
@@ -94,9 +104,9 @@ print ('Data extraction and dict construction completed in: ' + mf.sectotime(tim
 
 
 '''SAVE PATHS AND PARAMETERS'''
-params_results = '../../results'
+params_results = '../../../results'
 
-trial = t + '_tp00%.0f'%(trainportion*1000)
+trial = 'pkhp_t1'
 modelsavename = '%s_%s'%(modelarch, trial)
 
 
@@ -156,13 +166,13 @@ param_path = os.path.join(save_path, modelsavename)
 nntrainer = nn.NeuralTrainer(nnmodel, save='best', file_path=param_path)
 
 #SET UP A CLAUSE TO INITIATE TRANSFER LEARNING
-if TRANSFER:
-    #save a copy of the current parameters
-    from shutil import copyfile
-    oldfiles = ['%s_best.ckpt.data-00000-of-00001'%(modelsavename), '%s_best.ckpt.index'%(modelsavename), '%s_best.ckpt.meta'%(modelsavename)]
-    newfiles = ['pretransfer_' + file for file in oldfiles]
-    for ii in range(len(newfiles)):
-        copyfile(os.path.join(save_path, oldfiles[ii]), os.path.join(save_path, newfiles[ii]))
+#if TRANSFER:
+#    #save a copy of the current parameters
+#    from shutil import copyfile
+#    oldfiles = ['%s_best.ckpt.data-00000-of-00001'%(modelsavename), '%s_best.ckpt.index'%(modelsavename), '%s_best.ckpt.meta'%(modelsavename)]
+#    newfiles = ['pretransfer_' + file for file in oldfiles]
+#    for ii in range(len(newfiles)):
+#        copyfile(os.path.join(save_path, oldfiles[ii]), os.path.join(save_path, newfiles[ii]))
 
 
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -217,12 +227,15 @@ if FOM:
   num_plots = range(plots)
   fig = plt.figure(figsize=(15,plots*2+1))
   for ii in num_plots: 
+    X = np.expand_dims(test['inputs'][plot_index[ii]], axis=0)
 
-      X = np.expand_dims(test['inputs'][plot_index[10000+ii]], axis=0)
-      
-      ax = fig.add_subplot(plots, 1, ii+1)
-      mf.fom_saliency_mul(X, layer='dense_1_bias', alphabet='rna', nntrainer=nntrainer, sess=sess, ax =ax)
-      fom_file = modelsavename + 'FoM' + '.png'
+    ax = fig.add_subplot(plots, 1, ii+1)
+    mf.fom_saliency_mul(X, layer='dense_1_bias', alphabet='rna', nntrainer=nntrainer, sess=sess, ax =ax)
+
+    if not TRANSFER:
+        fom_file = modelsavename + 'FoM' + '_pretransfer' + '.png'
+    else:
+        fom_file = modelsavename + 'FoM' + '_posttransfer' + '.png'
   fom_file = os.path.join(img_folder, fom_file)
   plt.savefig(fom_file)
 
@@ -270,7 +283,10 @@ if SOMVIS:
   sb.heatmap(C,vmin=None, cmap='Blues', linewidth=0.0)
   plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
 
-  som_file = modelsavename + 'SoM_bpfilter' + '.png'
+  if not TRANSFER:
+    som_file = modelsavename + 'SoM_bpfilter' + '_pretransfer' + '.png'
+  else:
+    som_file = modelsavename + 'SoM_bpfilter' + '_posttransfer' +'.png'
   som_file = os.path.join(img_folder, som_file)
   plt.savefig(som_file)
   plt.close()
