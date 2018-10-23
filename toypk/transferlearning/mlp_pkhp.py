@@ -28,9 +28,15 @@ FOM = False
 SOMCALC = False
 SOMVIS = False
 TRANSFER = False
+SOME = False
+JUSTPKHP = False
 
 if '--transfer' in sys.argv:
   TRANSFER = True
+if '--some' in sys.argv:
+  SOME = True
+if '--justpkhp' in sys.argv:
+  JUSTPKHP = True
 if '--train' in sys.argv:
   TRAIN = True
 if '--test' in sys.argv:
@@ -51,7 +57,9 @@ exp = 'toypk'  #for the params folder
 modelarch = 'mlp'
 
 img_folder = 'Images'
-datatype = 1
+datatype = sys.argv[1]
+trialnum = sys.argv[2]
+
 
 #---------------------------------------------------------------------------------------------------------------------------------
 
@@ -61,24 +69,39 @@ starttime = time.time()
 
 #Open data from h5py
 exp_data = 'data_toypk'
-filename = 'toypkhp_10_d%0.f.hdf5'%(datatype)
+filename = 'toypkhp_50_d%0.f.hdf5'%(datatype)
 data_path = os.path.join('../../..', exp_data, filename)
-if TRANSFER:
+
+if TRANSFER: #import pkhp data to transfer learn
+    ext = '_pkhp'
+elif JUSTPKHP:
     ext = '_pkhp'
 else:
     ext = '_hp'
-with h5py.File(data_path, 'r') as dataset:
-    X_data = np.array(dataset['X_data%s'%(ext)])
-    Y_data = np.array(dataset['Y_data'])
-print ('X_data%s'%(ext))
 
-X_data = np.expand_dims(X_data, axis=2)
+with h5py.File(data_path, 'r') as dataset:
+    X_pos = np.array(dataset['X_pos%s'%(ext)])
+    X_neg = np.array(dataset['X_neg%s'%(ext)])
+
+    Y_pos = np.array(dataset['Y_pos'])
+    Y_neg = np.array(dataset['Y_pos'])
+
+
+X_pos = np.expand_dims(X_pos, axis=2)
+X_neg = np.expand_dims(X_neg, axis=2)
     
-numdata, seqlen, _, dims = X_data.shape
+numdata, seqlen, _, dims = X_pos.shape
+
+if not SOME: 
+    X_data = np.concatenate((X_pos, X_neg), axis=0)
+    Y_data = np.concatenate((Y_pos, Y_neg), axis=0)
+if SOME: 
+    X_data = np.concatenate((X_pos[:numdata//20], X_neg[:numdata//20]), axis=0) #Just reduce the set to 1/20th of the larger dataset
+    Y_data = np.concatenate((Y_pos[:numdata//20], Y_neg[:numdata//20]), axis=0) #i.e 5000 sequences in total
     
 # get validation and test set from training set
 if not TRANSFER: #set the proportions for pretransfer 
-    train_frac = 0.5
+    train_frac = 0.5 #This means the pretransfer model is training on 25,000 pos and 25,000 neg sequences
     valid_frac = 0.2
     test_frac = 0.3
 if TRANSFER:
@@ -106,7 +129,7 @@ print ('Data extraction and dict construction completed in: ' + mf.sectotime(tim
 '''SAVE PATHS AND PARAMETERS'''
 params_results = '../../../results'
 
-trial = 'pkhp_t1'
+trial = 'pkhp_d%0.ft%0.f'%(datatype, trialnum)
 modelsavename = '%s_%s'%(modelarch, trial)
 
 
@@ -166,13 +189,13 @@ param_path = os.path.join(save_path, modelsavename)
 nntrainer = nn.NeuralTrainer(nnmodel, save='best', file_path=param_path)
 
 #SET UP A CLAUSE TO INITIATE TRANSFER LEARNING
-#if TRANSFER:
-#    #save a copy of the current parameters
-#    from shutil import copyfile
-#    oldfiles = ['%s_best.ckpt.data-00000-of-00001'%(modelsavename), '%s_best.ckpt.index'%(modelsavename), '%s_best.ckpt.meta'%(modelsavename)]
-#    newfiles = ['pretransfer_' + file for file in oldfiles]
-#    for ii in range(len(newfiles)):
-#        copyfile(os.path.join(save_path, oldfiles[ii]), os.path.join(save_path, newfiles[ii]))
+if TRANSFER:
+    #save a copy of the current parameters
+    from shutil import copyfile
+    oldfiles = ['%s_best.ckpt.data-00000-of-00001'%(param_path), '%s_best.ckpt.index'%(param_path), '%s_best.ckpt.meta'%(param_path)]
+    newfiles = ['pretransfer_' + file for file in oldfiles]
+    for ii in range(len(newfiles)):
+        copyfile(oldfiles[ii], newfiles[ii])
 
 
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -247,16 +270,16 @@ if FOM:
 if SOMCALC:
   num_summary = 500
 
-  arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
+  arrayspath = 'Arrays/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
   Xdict = test['inputs'][plot_index[:num_summary]]
 
-  mean_mut2 = mf.som_average_ungapped_logodds(Xdict, range(seqlen), arrayspath, nntrainer, sess, progress='on', 
+  mean_mut2 = mf.som_average_ungapped_logodds(Xdict, range(seqlen), arrayspath, nntrainer, sess, progress='short', 
                                              save=True, layer='dense_1_bias')
 
 if SOMVIS:  
   #Load the saved data
   num_summary = 500
-  arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
+  arrayspath = 'Arrays/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
   mean_mut2 = np.load(arrayspath)
 
   #Reshape into a holistic tensor organizing the mutations into 4*4
@@ -281,12 +304,14 @@ if SOMVIS:
 
   plt.figure(figsize=(8,6))
   sb.heatmap(C,vmin=None, cmap='Blues', linewidth=0.0)
-  plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
+  plt.title('Base Pair scores: %s %s '%(exp, modelsavename))
 
-  if not TRANSFER:
-    som_file = modelsavename + 'SoM_bpfilter' + '_pretransfer' + '.png'
+  if JUSTPKHP:
+    som_file = modelsavename + 'SoM_bpfilter' + '_justkhp' + '.png'
+  if TRANSFER:
+    som_file = modelsavename + 'SoM_bpfilter' + '_posttransfer' + '.png'
   else:
-    som_file = modelsavename + 'SoM_bpfilter' + '_posttransfer' +'.png'
+    som_file = modelsavename + 'SoM_bpfilter' + '_pretransfer' +'.png'
   som_file = os.path.join(img_folder, som_file)
   plt.savefig(som_file)
   plt.close()
