@@ -109,6 +109,8 @@ if TRANSFER:
     valid_frac = 0.1
     test_frac = 0.1
 
+numdata, seqlen, _, dims = X_data.shape
+
 N = numdata
 split_1 = int(N*(1-valid_frac-test_frac))
 split_2 = int(N*(1-test_frac))
