@@ -69,7 +69,7 @@ starttime = time.time()
 
 #Open data from h5py
 exp_data = 'data_toypk'
-filename = 'toypkhp_50_d%0.f.hdf5'%(datatype)
+filename = 'toypkhp_50_d%s.hdf5'%(datatype)
 data_path = os.path.join('../../..', exp_data, filename)
 
 if TRANSFER: #import pkhp data to transfer learn
@@ -84,7 +84,7 @@ with h5py.File(data_path, 'r') as dataset:
     X_neg = np.array(dataset['X_neg%s'%(ext)])
 
     Y_pos = np.array(dataset['Y_pos'])
-    Y_neg = np.array(dataset['Y_pos'])
+    Y_neg = np.array(dataset['Y_neg'])
 
 
 X_pos = np.expand_dims(X_pos, axis=2)
@@ -98,7 +98,7 @@ if not SOME:
 if SOME: 
     X_data = np.concatenate((X_pos[:numdata//20], X_neg[:numdata//20]), axis=0) #Just reduce the set to 1/20th of the larger dataset
     Y_data = np.concatenate((Y_pos[:numdata//20], Y_neg[:numdata//20]), axis=0) #i.e 5000 sequences in total
-    
+#print (np.sum(Y_neg), np.sum(Y_pos))
 # get validation and test set from training set
 if not TRANSFER: #set the proportions for pretransfer 
     train_frac = 0.5 #This means the pretransfer model is training on 25,000 pos and 25,000 neg sequences
