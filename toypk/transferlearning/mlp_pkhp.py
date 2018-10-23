@@ -51,7 +51,7 @@ exp = 'toypk'  #for the params folder
 modelarch = 'mlp'
 
 img_folder = 'Images'
-
+datatype = 1
 
 #---------------------------------------------------------------------------------------------------------------------------------
 
@@ -61,7 +61,7 @@ starttime = time.time()
 
 #Open data from h5py
 exp_data = 'data_toypk'
-filename = 'toypkhp_10_d1.hdf5'
+filename = 'toypkhp_10_d%0.f.hdf5'%(datatype)
 data_path = os.path.join('../../..', exp_data, filename)
 if TRANSFER:
     ext = '_pkhp'
@@ -179,17 +179,17 @@ nntrainer = nn.NeuralTrainer(nnmodel, save='best', file_path=param_path)
 
 '''TRAIN '''
 if TRAIN:
-  # initialize session
-  sess = utils.initialize_session()
+    # initialize session
+    sess = utils.initialize_session()
 
-  if TRANSFER:
+    if TRANSFER:
       # set best parameters to transfer learning
-      nntrainer.set_best_parameters(sess)
+        nntrainer.set_best_parameters(sess)
 
-  #Train the model
+    #Train the model
 
-  data = {'train': train, 'valid': valid}
-  fit.train_minibatch(sess, nntrainer, data, 
+    data = {'train': train, 'valid': valid}
+    fit.train_minibatch(sess, nntrainer, data, 
                     batch_size=100, 
                     num_epochs=100,
                     patience=40, 
@@ -198,7 +198,7 @@ if TRAIN:
                     save_all=False)
 
 
-  sess.close()
+    sess.close()
 
   #---------------------------------------------------------------------------------------------------------------------------------      
 '''TEST'''

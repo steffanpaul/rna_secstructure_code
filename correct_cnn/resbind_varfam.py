@@ -140,7 +140,7 @@ for t in trials:
   params_results = '../../results'
 
   modelarch = 'resbind'
-  trial = t
+  trial = t + '_' + exp
   modelsavename = '%s_%s'%(modelarch, trial)
 
 
@@ -155,7 +155,7 @@ for t in trials:
               }
       layer2 = {'layer': 'conv1d',
               'num_filters': 96,
-              'filter_size': 12,
+              'filter_size': 30,
               'norm': 'batch',
               'activation': 'relu',
               'dropout': 0.3,
@@ -281,7 +281,7 @@ for t in trials:
   if SOMCALC:
     num_summary = 2000
 
-    arrayspath = 'Arraysvar/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
+    arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
     X = test_align['inputs'][plot_index[:num_summary]]
 
     mean_mut2 = helper.som_average_ungapped_logodds_unalign(X, ugidx,maxlength, arrayspath, nntrainer, sess, progress='short', 
@@ -290,7 +290,7 @@ for t in trials:
   if SOMVIS:  
     #Load the saved data
     num_summary = 2000
-    arrayspath = 'Arraysvar/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
+    arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
     mean_mut2 = np.load(arrayspath)
 
     #Reshape into a holistic tensor organizing the mutations into 4*4

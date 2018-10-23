@@ -43,13 +43,13 @@ if '--somvis' in sys.argv:
 
 #---------------------------------------------------------------------------------------------------------------------------------
 '''DEFINE LOOP'''
-trials = ['glna']#['glna', 'trna', 'riboswitch']
+trials = ['glna', 'trna', 'riboswitch']
 
 datafiles = {'glna': ['glna_100k_d8.hdf5', '../../data_RFAM/glnAsim_100k.sto'], 
               'trna': ['trna_100k_d4.hdf5', '../../data_RFAM/trnasim_100k.sto'],
               'riboswitch': ['riboswitch_100k_d4.hdf5', '../../data_RFAM/riboswitch_100k.sto'],}
 
-exp = 'corfam'  #for both the data folder and the params folder
+exp = 'corvarfam'  #for both the data folder and the params folder
 exp_data = 'data_RFAM'
 
 img_folder = 'Images'
@@ -86,15 +86,38 @@ for t in trials:
   split_2 = int(N*(1-test_frac))
   shuffle = np.random.permutation(N)
 
+  def unalign(X):
+    nuc_index = np.where(np.sum(X, axis=2)!=0)
+    return (X[nuc_index])
+
+  X_data_unalign = [unalign(X) for X in X_data]
+  lengths = [len(X) for X in X_data_unalign]
+  maxlength = helper.get_maxlength(X_data_unalign)
+  X_data_unalign = np.expand_dims(helper.pad_inputs(X_data_unalign, MAX=maxlength)[0], axis=2)
+
+
+
   #set up dictionaries
-  train = {'inputs': X_data[shuffle[:split_1]], 
+  train = {'inputs': X_data_unalign[shuffle[:split_1]], 
            'targets': Y_data[shuffle[:split_1]]}
-  valid = {'inputs': X_data[shuffle[split_1:split_2]], 
+  valid = {'inputs': X_data_unalign[shuffle[split_1:split_2]], 
            'targets': Y_data[shuffle[split_1:split_2]]}
-  test = {'inputs': X_data[shuffle[split_2:]], 
+  test = {'inputs': X_data_unalign[shuffle[split_2:]], 
+           'targets': Y_data[shuffle[split_2:]]}
+
+  #set up dictionaries
+  train_align = {'inputs': X_data[shuffle[:split_1]], 
+           'targets': Y_data[shuffle[:split_1]]}
+  valid_align = {'inputs': X_data[shuffle[split_1:split_2]], 
+           'targets': Y_data[shuffle[split_1:split_2]]}
+  test_align = {'inputs': X_data[shuffle[split_2:]], 
            'targets': Y_data[shuffle[split_2:]]}
       
   print ('Data extraction and dict construction completed in: ' + mf.sectotime(time.time() - starttime))
+
+  print (t, 'Length of Alignment:', X_data.shape[1])
+  print (t, 'Max length of all sequences:', X_data_unalign.shape[1])
+  print (t, 'Average length of all sequences:', np.mean(lengths))
 
   simalign_file = datafiles[t][1]
   #Get the full secondary structure and sequence consensus from the emission
@@ -137,7 +160,7 @@ for t in trials:
               }
       layer2 = {'layer': 'conv1d',
               'num_filters': 96,
-              'filter_size': 500,
+              'filter_size': 100,
               'norm': 'batch',
               'activation': 'relu',
               'dropout': 0.3,
@@ -196,132 +219,5 @@ for t in trials:
   param_path = os.path.join(save_path, modelsavename)
   nntrainer = nn.NeuralTrainer(nnmodel, save='best', file_path=param_path)
 
+
   
-
-  #---------------------------------------------------------------------------------------------------------------------------------
-
-  '''TRAIN '''
-  if TRAIN:
-    # initialize session
-    sess = utils.initialize_session()
-
-    #Train the model
-
-    data = {'train': train, 'valid': valid}
-    fit.train_minibatch(sess, nntrainer, data, 
-                      batch_size=100, 
-                      num_epochs=100,
-                      patience=40, 
-                      verbose=2, 
-                      shuffle=True, 
-                      save_all=False)
-
-
-    sess.close()
-
-    #---------------------------------------------------------------------------------------------------------------------------------      
-  '''TEST'''
-  sess = utils.initialize_session()
-  if TEST:
-    
-    # set best parameters
-    nntrainer.set_best_parameters(sess)
-
-    # test model
-    loss, mean_vals, std_vals = nntrainer.test_model(sess, test, name='test')
-    if WRITE:
-      metricsline = '%s,%s,%s,%s,%s,%s,%s'%(exp, modelarch, trial, loss, mean_vals[0], mean_vals[1], mean_vals[2])
-      fd = open('test_metrics.csv', 'a')
-      fd.write(metricsline+'\n')
-      fd.close()
-  '''SORT ACTIVATIONS'''
-  nntrainer.set_best_parameters(sess)
-  predictionsoutput = nntrainer.get_activations(sess, test, layer='output')
-  plot_index = np.argsort(predictionsoutput[:,0])[::-1]
-
-  #---------------------------------------------------------------------------------------------------------------------------------
-  '''FIRST ORDER MUTAGENESIS'''
-  if FOM:
-    plots = 3
-    num_plots = range(plots)
-    fig = plt.figure(figsize=(15,plots*2+1))
-    for ii in num_plots: 
-
-        X = np.expand_dims(test['inputs'][plot_index[10000+ii]], axis=0)
-        
-        ax = fig.add_subplot(plots, 1, ii+1)
-        mf.fom_saliency_mul(X, layer='dense_1_bias', alphabet='rna', nntrainer=nntrainer, sess=sess, ax =ax)
-        fom_file = modelsavename + 'FoM' + '.png'
-    fom_file = os.path.join(img_folder, fom_file)
-    plt.savefig(fom_file)
-
-    plt.close()
-  #---------------------------------------------------------------------------------------------------------------------------------
-  '''SECOND ORDER MUTAGENESIS'''
-
-  '''Som calc'''
-  if SOMCALC:
-    num_summary = 2000
-
-    arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
-    X = test['inputs'][plot_index[:num_summary]]
-
-    mean_mut2 = mf.som_average_ungapped_logodds(X, ugidx, arrayspath, nntrainer, sess, progress='short', 
-                                               save=True, layer='dense_1_bias')
-
-  if SOMVIS:  
-    #Load the saved data
-    num_summary = 2000
-    arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
-    mean_mut2 = np.load(arrayspath)
-
-    #Reshape into a holistic tensor organizing the mutations into 4*4
-    meanhol_mut2 = mean_mut2.reshape(numug,numug,4,4)
-
-    #Normalize
-    normalize = True
-    if normalize:
-        norm_meanhol_mut2 = mf.normalize_mut_hol(meanhol_mut2, nntrainer, sess, normfactor=1)
-
-    #Let's try something weird
-    bpfilter = np.ones((4,4))*0.
-    for i,j in zip(range(4), range(4)):
-        bpfilter[i, -(j+1)] = +1.
-
-    nofilter = np.ones((4,4))
-
-    C = (norm_meanhol_mut2*bpfilter)
-    C = np.sum((C).reshape(numug,numug,dims*dims), axis=2)
-    #C = C - np.mean(C)
-    #C = C/np.max(C)
-
-    plt.figure(figsize=(15,6))
-    plt.subplot(1,2,1)
-    sb.heatmap(C,vmin=None, cmap='Reds', linewidth=0.0)
-    plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
-
-    som_file = modelsavename + 'SoM_bpfilter' + '.png'
-    som_file = os.path.join(img_folder, som_file)
-    plt.savefig(som_file)
-    plt.close()
-
-
-    blocklen = np.sqrt(np.product(meanhol_mut2.shape)).astype(int)
-    S = np.zeros((blocklen, blocklen))
-    i,j,k,l = meanhol_mut2.shape
-
-    for ii in range(i):
-        for jj in range(j):
-            for kk in range(k):
-                for ll in range(l):
-                    S[(4*ii)+kk, (4*jj)+ll] = meanhol_mut2[ii,jj,kk,ll]
-
-    plt.figure(figsize=(15,15))
-    plt.imshow(S,  cmap='Reds', vmin=None)
-    plt.colorbar()
-    plt.title('Blockvis of all mutations: %s %s %s'%(exp, modelarch, trial))
-
-    som_file = modelsavename + 'SoM_blockvis' + '.png'
-    som_file = os.path.join(img_folder, som_file)
-    plt.savefig(som_file)
-    plt.close()
