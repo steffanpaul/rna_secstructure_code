@@ -129,7 +129,7 @@ print ('Data extraction and dict construction completed in: ' + mf.sectotime(tim
 '''SAVE PATHS AND PARAMETERS'''
 params_results = '../../../results'
 
-trial = 'pkhp_d%0.ft%0.f'%(datatype, trialnum)
+trial = 'pkhp_d%st%s'%(datatype, trialnum)
 modelsavename = '%s_%s'%(modelarch, trial)
 
 
