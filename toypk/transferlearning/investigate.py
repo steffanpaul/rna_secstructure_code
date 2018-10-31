@@ -53,10 +53,10 @@ if '--somvis' in sys.argv:
 #---------------------------------------------------------------------------------------------------------------------------------
 '''DEFINE LOOP'''
 
-exp = 'toypk_again'  #for the params folder
+exp = 'toypk'  #for the params folder
 modelarch = 'mlp'
 
-img_folder = 'Images_again'
+img_folder = 'Images'
 datatype = sys.argv[1]
 trialnum = sys.argv[2]
 
@@ -96,12 +96,8 @@ if not SOME:
     X_data = np.concatenate((X_pos, X_neg), axis=0)
     Y_data = np.concatenate((Y_pos, Y_neg), axis=0)
 if SOME: 
-    if trialnum == '6':
-      portion = 100
-    if trialnum == '7':
-      portion = 200
-    X_data = np.concatenate((X_pos[:numdata//portion], X_neg[:numdata//portion]), axis=0)
-    Y_data = np.concatenate((Y_pos[:numdata//portion], Y_neg[:numdata//portion]), axis=0) 
+    X_data = np.concatenate((X_pos[:numdata//20], X_neg[:numdata//20]), axis=0) #Just reduce the set to 1/20th of the larger dataset
+    Y_data = np.concatenate((Y_pos[:numdata//20], Y_neg[:numdata//20]), axis=0) #i.e 5000 sequences in total
 #print (np.sum(Y_neg), np.sum(Y_pos))
 # get validation and test set from training set
 if not TRANSFER: #set the proportions for pretransfer 
@@ -112,6 +108,7 @@ if TRANSFER:
     train_frac = 0.8
     valid_frac = 0.1
     test_frac = 0.1
+    print ("I'm transfering buddy!")
 
 numdata, seqlen, _, dims = X_data.shape
 
@@ -127,6 +124,9 @@ valid = {'inputs': X_data[shuffle[split_1:split_2]],
          'targets': Y_data[shuffle[split_1:split_2]]}
 test = {'inputs': X_data[shuffle[split_2:]], 
          'targets': Y_data[shuffle[split_2:]]}
+
+print (ext)
+print (train_frac)
 
 print ('Data extraction and dict construction completed in: ' + mf.sectotime(time.time() - starttime))
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -202,8 +202,10 @@ if TRANSFER:
     newfiles = ['%s%s_best.ckpt.data-00000-of-00001'%(param_path, 'pretransfer'), 
                 '%s%s_best.ckpt.index'%(param_path, 'pretransfer'), 
                 '%s%s_best.ckpt.meta'%(param_path, 'pretransfer')]
+    #newfiles = ['pretransfer_' + file for file in oldfiles]
     for ii in range(len(newfiles)):
         copyfile(oldfiles[ii], newfiles[ii])
+        #print (newfiles[ii])
 
 
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -278,7 +280,7 @@ if FOM:
 if SOMCALC:
   num_summary = 500
 
-  arrayspath = 'Arrays_again/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
+  arrayspath = 'Arrays/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
   Xdict = test['inputs'][plot_index[:num_summary]]
 
   mean_mut2 = mf.som_average_ungapped_logodds(Xdict, range(seqlen), arrayspath, nntrainer, sess, progress='short', 
@@ -287,7 +289,7 @@ if SOMCALC:
 if SOMVIS:  
   #Load the saved data
   num_summary = 500
-  arrayspath = 'Arrays_again/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
+  arrayspath = 'Arrays/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
   mean_mut2 = np.load(arrayspath)
 
   #Reshape into a holistic tensor organizing the mutations into 4*4
