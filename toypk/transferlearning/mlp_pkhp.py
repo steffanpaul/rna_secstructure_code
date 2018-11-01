@@ -30,7 +30,11 @@ SOMVIS = False
 TRANSFER = False
 SOME = False
 JUSTPKHP = False
+PRETRANSFER = False
 
+
+if '--pretransfer' in sys.argv:
+  PRETRANSFER = True
 if '--transfer' in sys.argv:
   TRANSFER = True
 if '--some' in sys.argv:
@@ -59,6 +63,8 @@ modelarch = 'mlp'
 img_folder = 'Images_again'
 datatype = sys.argv[1]
 trialnum = sys.argv[2]
+if SOME:
+  portion = int(sys.argv[3]) #pulls out the divisor of the data portion eg. 50 = 50,000/50 = 1000 seqs
 
 
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -76,7 +82,7 @@ if TRANSFER: #import pkhp data to transfer learn
     ext = '_pkhp'
 elif JUSTPKHP:
     ext = '_pkhp'
-else:
+elif PRETRANSFER:
     ext = '_hp'
 
 with h5py.File(data_path, 'r') as dataset:
@@ -96,10 +102,10 @@ if not SOME:
     X_data = np.concatenate((X_pos, X_neg), axis=0)
     Y_data = np.concatenate((Y_pos, Y_neg), axis=0)
 if SOME: 
-    if trialnum == '6':
-      portion = 100
-    if trialnum == '7':
-      portion = 200
+    #if trialnum == '6':
+    #  portion = 100
+    #if trialnum == '7':
+    #  portion = 200
     X_data = np.concatenate((X_pos[:numdata//portion], X_neg[:numdata//portion]), axis=0)
     Y_data = np.concatenate((Y_pos[:numdata//portion], Y_neg[:numdata//portion]), axis=0) 
 #print (np.sum(Y_neg), np.sum(Y_pos))
@@ -136,7 +142,13 @@ print ('Data extraction and dict construction completed in: ' + mf.sectotime(tim
 params_results = '../../../results'
 
 trial = 'pkhp_d%st%s'%(datatype, trialnum)
+
+if PRETRANSFER:
+  trial = 'pkhp_d%s_pretran'%(datatype)
+
 modelsavename = '%s_%s'%(modelarch, trial)
+
+
 
 
 
@@ -195,15 +207,11 @@ param_path = os.path.join(save_path, modelsavename)
 nntrainer = nn.NeuralTrainer(nnmodel, save='best', file_path=param_path)
 
 #SET UP A CLAUSE TO INITIATE TRANSFER LEARNING
-if TRANSFER:
-    #save a copy of the current parameters
-    from shutil import copyfile
-    oldfiles = ['%s_best.ckpt.data-00000-of-00001'%(param_path), '%s_best.ckpt.index'%(param_path), '%s_best.ckpt.meta'%(param_path)]
-    newfiles = ['%s%s_best.ckpt.data-00000-of-00001'%(param_path, 'pretransfer'), 
-                '%s%s_best.ckpt.index'%(param_path, 'pretransfer'), 
-                '%s%s_best.ckpt.meta'%(param_path, 'pretransfer')]
-    for ii in range(len(newfiles)):
-        copyfile(oldfiles[ii], newfiles[ii])
+if TRANSFER and TRAIN:
+    #make the pretransfer file a copy of what we want now
+    print ('you failed')
+    #import helptransfer as htf
+    #htf.import_pretransfer(params_results, exp, datatype, trialnum, modelarch)
 
 
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -223,7 +231,7 @@ if TRAIN:
     fit.train_minibatch(sess, nntrainer, data, 
                     batch_size=100, 
                     num_epochs=100,
-                    patience=40, 
+                    patience=100, 
                     verbose=2, 
                     shuffle=True, 
                     save_all=False)
@@ -277,6 +285,8 @@ if FOM:
 '''Som calc'''
 if SOMCALC:
   num_summary = 500
+  if num_summary > X_data.shape[0]//2:
+    num_summary = X_data.shape[0]//2
 
   arrayspath = 'Arrays_again/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
   Xdict = test['inputs'][plot_index[:num_summary]]
@@ -287,6 +297,8 @@ if SOMCALC:
 if SOMVIS:  
   #Load the saved data
   num_summary = 500
+  if num_summary > X_data.shape[0]//2:
+    num_summary = X_data.shape[0]//2
   arrayspath = 'Arrays_again/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
   mean_mut2 = np.load(arrayspath)
 
