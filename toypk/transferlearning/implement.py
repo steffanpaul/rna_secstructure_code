@@ -5,15 +5,16 @@ from subprocess import call
 
 for data in ['4']:
 	call(['python', 'mlp_pkhp.py', data, '1', '--justpkhp', '--train', '--test', '--somcalc', '--somvis'])
-	
+	#call(['python', 'mlp_pkhp.py', data, '1.3', '--some' '50', '--justpkhp', '--train', '--test', '--somcalc', '--somvis'])
+	#call(['python', 'mlp_pkhp.py', data, '1.4', '--some' '100', '--justpkhp', '--train', '--test', '--somcalc', '--somvis'])
+
 	call(['python', 'mlp_pkhp.py', data, '2', '--transfer', '--train', '--test', '--somcalc', '--somvis'])
 
-	call(['python', 'mlp_pkhp.py', data, '3', '50', '--some', '--transfer', '--train', '--test', '--somcalc', '--somvis'])
+	call(['python', 'mlp_pkhp.py', data, '3',  '--some', '50', '--transfer', '--train', '--test', '--somcalc', '--somvis'])
 
-	call(['python', 'mlp_pkhp.py', data, '4', '100', '--some', '--transfer', '--train', '--test', '--somcalc', '--somvis'])
+	call(['python', 'mlp_pkhp.py', data, '4',  '--some', '100', '--transfer', '--train', '--test', '--somcalc', '--somvis'])
 
-	call(['python', 'mlp_pkhp.py', data, '5', '200', '--some', '--transfer', '--train', '--test', '--somcalc', '--somvis'])
-
+	call(['python', 'mlp_pkhp.py', data, '5',  '--some', '200', '--transfer', '--train', '--test', '--somcalc', '--somvis'])
 
 	'''
 	#train on just pkhp

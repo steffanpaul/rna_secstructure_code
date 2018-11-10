@@ -16,7 +16,7 @@ import helper
 from deepomics import neuralnetwork as nn
 from deepomics import utils, fit, visualize, saliency
 
-from Bio import AlignIO
+#from Bio import AlignIO
 import time as time
 import pandas as pd
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -54,17 +54,23 @@ if '--somcalc' in sys.argv:
 if '--somvis' in sys.argv:
   SOMVIS = True
 
+
 #---------------------------------------------------------------------------------------------------------------------------------
 '''DEFINE LOOP'''
 
-exp = 'toypk_again'  #for the params folder
+exp = 'toypk'  #for the params folder
 modelarch = 'mlp'
 
-img_folder = 'Images_again'
+img_folder = 'Images'
 datatype = sys.argv[1]
 trialnum = sys.argv[2]
 if SOME:
-  portion = int(sys.argv[3]) #pulls out the divisor of the data portion eg. 50 = 50,000/50 = 1000 seqs
+  portion = int(sys.argv[sys.argv.index('--some')+1]) #pulls out the divisor of the data portion eg. 50 = 50,000/50 = 1000 seqs
+
+if '--setepochs' in sys.argv: #set the number of epochs over which the model will train (with no patience)
+  numepochs = int(sys.argv[sys.argv.index('--setepochs')+1])
+else:
+  numepochs = 100
 
 
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -102,13 +108,9 @@ if not SOME:
     X_data = np.concatenate((X_pos, X_neg), axis=0)
     Y_data = np.concatenate((Y_pos, Y_neg), axis=0)
 if SOME: 
-    #if trialnum == '6':
-    #  portion = 100
-    #if trialnum == '7':
-    #  portion = 200
+
     X_data = np.concatenate((X_pos[:numdata//portion], X_neg[:numdata//portion]), axis=0)
     Y_data = np.concatenate((Y_pos[:numdata//portion], Y_neg[:numdata//portion]), axis=0) 
-#print (np.sum(Y_neg), np.sum(Y_pos))
 # get validation and test set from training set
 if not TRANSFER: #set the proportions for pretransfer 
     train_frac = 0.5 #This means the pretransfer model is training on 25,000 pos and 25,000 neg sequences
@@ -142,9 +144,13 @@ print ('Data extraction and dict construction completed in: ' + mf.sectotime(tim
 params_results = '../../../results'
 
 trial = 'pkhp_d%st%s'%(datatype, trialnum)
+if '--setepochs' in sys.argv:
+  trial = 'pkhp_d%st%se%s'%(datatype, trialnum, numepochs)
 
 if PRETRANSFER:
   trial = 'pkhp_d%s_pretran'%(datatype)
+  numepochs = 3
+
 
 modelsavename = '%s_%s'%(modelarch, trial)
 
@@ -209,9 +215,9 @@ nntrainer = nn.NeuralTrainer(nnmodel, save='best', file_path=param_path)
 #SET UP A CLAUSE TO INITIATE TRANSFER LEARNING
 if TRANSFER and TRAIN:
     #make the pretransfer file a copy of what we want now
-    print ('you failed')
-    #import helptransfer as htf
-    #htf.import_pretransfer(params_results, exp, datatype, trialnum, modelarch)
+    import helptransfer as htf
+    htf.import_pretransfer(params_results, exp, datatype, trialnum, modelarch)
+
 
 
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -230,8 +236,8 @@ if TRAIN:
     data = {'train': train, 'valid': valid}
     fit.train_minibatch(sess, nntrainer, data, 
                     batch_size=100, 
-                    num_epochs=100,
-                    patience=100, 
+                    num_epochs=numepochs,
+                    patience=numepochs, 
                     verbose=2, 
                     shuffle=True, 
                     save_all=False)
@@ -288,7 +294,7 @@ if SOMCALC:
   if num_summary > X_data.shape[0]//2:
     num_summary = X_data.shape[0]//2
 
-  arrayspath = 'Arrays_again/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
+  arrayspath = 'Arrays/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
   Xdict = test['inputs'][plot_index[:num_summary]]
 
   mean_mut2 = mf.som_average_ungapped_logodds(Xdict, range(seqlen), arrayspath, nntrainer, sess, progress='short', 
@@ -299,7 +305,7 @@ if SOMVIS:
   num_summary = 500
   if num_summary > X_data.shape[0]//2:
     num_summary = X_data.shape[0]//2
-  arrayspath = 'Arrays_again/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
+  arrayspath = 'Arrays/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
   mean_mut2 = np.load(arrayspath)
 
   #Reshape into a holistic tensor organizing the mutations into 4*4
