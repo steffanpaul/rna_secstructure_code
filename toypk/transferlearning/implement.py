@@ -8,7 +8,8 @@ for data in ['4']:
     #call(['python', 'mlp_pkhp.py', data, '1', '--justpkhp', '--train', '--test', '--somcalc', '--somvis'])
     #call(['python', 'mlp_pkhp.py' , data, '1.3', '--some' '50', '--justpkhp', '--train', '--test', '--somcalc', '--somvis'])
     #call(['python', 'mlp_pkhp.py', data, '1.4', '--some' '100', '--justpkhp', '--train', '--test', '--somcalc', '--somvis'])
-    call(['python', 'mlp_pkhp.py', data, '1.5', '--some' '200', '--justpkhp', '--train', '--test', '--somcalc', '--somvis'])
+    #call(['python', 'mlp_pkhp.py', data, '1.5', '--some' '200', '--justpkhp', '--train', '--test', '--somcalc', '--somvis'])
+    call(['python', 'mlp_pkhp.py', data, '1.6', '--some' '500', '--justpkhp', '--train', '--test', '--somcalc', '--somvis'])
 
     #call(['python', 'mlp_pkhp.py', data, '2.1', '--transfer', '--setepochs', '1000', '--train', '--test', '--somcalc', '--somvis'])
 
