@@ -16,7 +16,7 @@ import helper
 from deepomics import neuralnetwork as nn
 from deepomics import utils, fit, visualize, saliency
 
-from Bio import AlignIO
+#from Bio import AlignIO
 import time as time
 import pandas as pd
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -28,9 +28,19 @@ FOM = False
 SOMCALC = False
 SOMVIS = False
 TRANSFER = False
+SOME = False
+JUSTPKHP = False
+PRETRANSFER = False
 
+
+if '--pretransfer' in sys.argv:
+  PRETRANSFER = True
 if '--transfer' in sys.argv:
   TRANSFER = True
+if '--some' in sys.argv:
+  SOME = True
+if '--justpkhp' in sys.argv:
+  JUSTPKHP = True
 if '--train' in sys.argv:
   TRAIN = True
 if '--test' in sys.argv:
@@ -44,13 +54,23 @@ if '--somcalc' in sys.argv:
 if '--somvis' in sys.argv:
   SOMVIS = True
 
+
 #---------------------------------------------------------------------------------------------------------------------------------
 '''DEFINE LOOP'''
 
 exp = 'toypk'  #for the params folder
 modelarch = 'resbind'
 
-img_folder = 'Images'
+img_folder = 'Images_cnn'
+datatype = sys.argv[1]
+trialnum = sys.argv[2]
+if SOME:
+  portion = int(sys.argv[sys.argv.index('--some')+1]) #pulls out the divisor of the data portion eg. 50 = 50,000/50 = 1000 seqs
+
+if '--setepochs' in sys.argv: #set the number of epochs over which the model will train (with no patience)
+  numepochs = int(sys.argv[sys.argv.index('--setepochs')+1])
+else:
+  numepochs = 100
 
 
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -61,30 +81,47 @@ starttime = time.time()
 
 #Open data from h5py
 exp_data = 'data_toypk'
-filename = 'toypkhp_10_d1.hdf5'
+filename = 'toypkhp_50_d%s.hdf5'%(datatype)
 data_path = os.path.join('../../..', exp_data, filename)
-if TRANSFER:
-    ext = '_pkhp'
-else:
-    ext = '_hp'
-with h5py.File(data_path, 'r') as dataset:
-    X_data = np.array(dataset['X_data%s'%(ext)])
-    Y_data = np.array(dataset['Y_data'])
-print ('X_data%s'%(ext))
 
-X_data = np.expand_dims(X_data, axis=2)
+if TRANSFER: #import pkhp data to transfer learn
+    ext = '_pkhp'
+elif JUSTPKHP:
+    ext = '_pkhp'
+elif PRETRANSFER:
+    ext = '_hp'
+
+with h5py.File(data_path, 'r') as dataset:
+    X_pos = np.array(dataset['X_pos%s'%(ext)])
+    X_neg = np.array(dataset['X_neg%s'%(ext)])
+
+    Y_pos = np.array(dataset['Y_pos'])
+    Y_neg = np.array(dataset['Y_neg'])
+
+
+X_pos = np.expand_dims(X_pos, axis=2)
+X_neg = np.expand_dims(X_neg, axis=2)
     
-numdata, seqlen, _, dims = X_data.shape
-    
+numdata, seqlen, _, dims = X_pos.shape
+
+if not SOME: 
+    X_data = np.concatenate((X_pos, X_neg), axis=0)
+    Y_data = np.concatenate((Y_pos, Y_neg), axis=0)
+if SOME: 
+
+    X_data = np.concatenate((X_pos[:numdata//portion], X_neg[:numdata//portion]), axis=0)
+    Y_data = np.concatenate((Y_pos[:numdata//portion], Y_neg[:numdata//portion]), axis=0) 
 # get validation and test set from training set
 if not TRANSFER: #set the proportions for pretransfer 
-    train_frac = 0.5
+    train_frac = 0.5 #This means the pretransfer model is training on 25,000 pos and 25,000 neg sequences
     valid_frac = 0.2
     test_frac = 0.3
-if TRANSFER:
+if TRANSFER or JUSTPKHP:
     train_frac = 0.8
     valid_frac = 0.1
     test_frac = 0.1
+
+numdata, seqlen, _, dims = X_data.shape
 
 N = numdata
 split_1 = int(N*(1-valid_frac-test_frac))
@@ -98,7 +135,7 @@ valid = {'inputs': X_data[shuffle[split_1:split_2]],
          'targets': Y_data[shuffle[split_1:split_2]]}
 test = {'inputs': X_data[shuffle[split_2:]], 
          'targets': Y_data[shuffle[split_2:]]}
-
+print (len(train['inputs']))
 print ('Data extraction and dict construction completed in: ' + mf.sectotime(time.time() - starttime))
 #---------------------------------------------------------------------------------------------------------------------------------
 
@@ -106,8 +143,18 @@ print ('Data extraction and dict construction completed in: ' + mf.sectotime(tim
 '''SAVE PATHS AND PARAMETERS'''
 params_results = '../../../results'
 
-trial = 'pkhp_t1'
+trial = 'pkhp_d%st%s'%(datatype, trialnum)
+if '--setepochs' in sys.argv:
+  trial = 'pkhp_d%st%se%s'%(datatype, trialnum, numepochs)
+
+if PRETRANSFER:
+  trial = 'pkhp_d%s_pretran'%(datatype)
+  numepochs = 3
+
+
 modelsavename = '%s_%s'%(modelarch, trial)
+
+
 
 
 
@@ -181,39 +228,37 @@ param_path = os.path.join(save_path, modelsavename)
 nntrainer = nn.NeuralTrainer(nnmodel, save='best', file_path=param_path)
 
 #SET UP A CLAUSE TO INITIATE TRANSFER LEARNING
-#if TRANSFER:
-#    #save a copy of the current parameters
-#    from shutil import copyfile
-#    oldfiles = ['%s_best.ckpt.data-00000-of-00001'%(modelsavename), '%s_best.ckpt.index'%(modelsavename), '%s_best.ckpt.meta'%(modelsavename)]
-#    newfiles = ['pretransfer_' + file for file in oldfiles]
-#    for ii in range(len(newfiles)):
-#        copyfile(os.path.join(save_path, oldfiles[ii]), os.path.join(save_path, newfiles[ii]))
+if TRANSFER and TRAIN:
+    #make the pretransfer file a copy of what we want now
+    import helptransfer as htf
+    htf.import_pretransfer(params_results, exp, datatype, modelarch, modelsavename)
+
 
 
 #---------------------------------------------------------------------------------------------------------------------------------
 
 '''TRAIN '''
 if TRAIN:
-  # initialize session
-  sess = utils.initialize_session()
+    # initialize session
+    sess = utils.initialize_session()
 
-  if TRANSFER:
+    if TRANSFER:
       # set best parameters to transfer learning
-      nntrainer.set_best_parameters(sess)
+        nntrainer.set_best_parameters(sess)
 
-  #Train the model
+    #Train the model
 
-  data = {'train': train, 'valid': valid}
-  fit.train_minibatch(sess, nntrainer, data, 
+    data = {'train': train, 'valid': valid}
+    fit.train_minibatch(sess, nntrainer, data, 
                     batch_size=100, 
-                    num_epochs=100,
-                    patience=40, 
+                    num_epochs=numepochs,
+                    patience=numepochs, 
                     verbose=2, 
                     shuffle=True, 
                     save_all=False)
 
 
-  sess.close()
+    sess.close()
 
   #---------------------------------------------------------------------------------------------------------------------------------      
 '''TEST'''
@@ -260,18 +305,22 @@ if FOM:
 
 '''Som calc'''
 if SOMCALC:
-  num_summary = 2000
+  num_summary = 500
+  if num_summary > X_data.shape[0]//2:
+    num_summary = X_data.shape[0]//2
 
-  arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
+  arrayspath = 'Arrays_cnn/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
   Xdict = test['inputs'][plot_index[:num_summary]]
 
-  mean_mut2 = mf.som_average_ungapped_logodds(Xdict, range(seqlen), arrayspath, nntrainer, sess, progress='on', 
+  mean_mut2 = mf.som_average_ungapped_logodds(Xdict, range(seqlen), arrayspath, nntrainer, sess, progress='short', 
                                              save=True, layer='dense_1_bias')
 
 if SOMVIS:  
   #Load the saved data
-  num_summary = 2000
-  arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
+  num_summary = 500
+  if num_summary > X_data.shape[0]//2:
+    num_summary = X_data.shape[0]//2
+  arrayspath = 'Arrays_cnn/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
   mean_mut2 = np.load(arrayspath)
 
   #Reshape into a holistic tensor organizing the mutations into 4*4
@@ -296,12 +345,14 @@ if SOMVIS:
 
   plt.figure(figsize=(8,6))
   sb.heatmap(C,vmin=None, cmap='Blues', linewidth=0.0)
-  plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
+  plt.title('Base Pair scores: %s %s '%(exp, modelsavename))
 
-  if not TRANSFER:
-    som_file = modelsavename + 'SoM_bpfilter' + '_pretransfer' + '.png'
+  if JUSTPKHP:
+    som_file = modelsavename + 'SoM_bpfilter' + '_justkhp' + '.png'
+  if TRANSFER:
+    som_file = modelsavename + 'SoM_bpfilter' + '_posttransfer' + '.png'
   else:
-    som_file = modelsavename + 'SoM_bpfilter' + '_posttransfer' +'.png'
+    som_file = modelsavename + 'SoM_bpfilter' + '_pretransfer' +'.png'
   som_file = os.path.join(img_folder, som_file)
   plt.savefig(som_file)
   plt.close()

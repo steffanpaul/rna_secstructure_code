@@ -116,7 +116,7 @@ if not TRANSFER: #set the proportions for pretransfer
     train_frac = 0.5 #This means the pretransfer model is training on 25,000 pos and 25,000 neg sequences
     valid_frac = 0.2
     test_frac = 0.3
-if TRANSFER:
+if TRANSFER or JUSTPKHP:
     train_frac = 0.8
     valid_frac = 0.1
     test_frac = 0.1
@@ -135,7 +135,7 @@ valid = {'inputs': X_data[shuffle[split_1:split_2]],
          'targets': Y_data[shuffle[split_1:split_2]]}
 test = {'inputs': X_data[shuffle[split_2:]], 
          'targets': Y_data[shuffle[split_2:]]}
-
+print (len(train['inputs']))
 print ('Data extraction and dict construction completed in: ' + mf.sectotime(time.time() - starttime))
 #---------------------------------------------------------------------------------------------------------------------------------
 
