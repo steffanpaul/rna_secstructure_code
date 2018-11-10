@@ -8,7 +8,7 @@ import numpy as np
 from shutil import copyfile
 
 
-def import_pretransfer(params_results, exp, datatype, trialnum, modelarch):
+def import_pretransfer(params_results, exp, datatype, modelarch, truemodelsavename):
     
     '''
     Define a function that makes a copy of the pretansfer names
@@ -40,11 +40,11 @@ def import_pretransfer(params_results, exp, datatype, trialnum, modelarch):
     oldfiles = ['%s_best.ckpt.data-00000-of-00001'%(param_path), '%s_best.ckpt.index'%(param_path), '%s_best.ckpt.meta'%(param_path)]
 
     #Now make a list of the trial filenames
-    trial = 'pkhp_d%st%s'%(datatype, trialnum)
-    modelsavename = '%s_%s'%(modelarch, trial)
+    #trial = 'pkhp_d%st%s'%(datatype, trialnum)
+    #modelsavename = '%s_%s'%(modelarch, trial)
 
     save_path = os.path.join(params_results, exp)
-    param_path = os.path.join(save_path, modelsavename)
+    param_path = os.path.join(save_path, truemodelsavename)
 
     newfiles = ['%s_best.ckpt.data-00000-of-00001'%(param_path), '%s_best.ckpt.index'%(param_path), '%s_best.ckpt.meta'%(param_path)]
 

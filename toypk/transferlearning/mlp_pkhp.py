@@ -216,7 +216,7 @@ nntrainer = nn.NeuralTrainer(nnmodel, save='best', file_path=param_path)
 if TRANSFER and TRAIN:
     #make the pretransfer file a copy of what we want now
     import helptransfer as htf
-    htf.import_pretransfer(params_results, exp, datatype, trialnum, modelarch)
+    htf.import_pretransfer(params_results, exp, datatype, modelarch, modelsavename)
 
 
 
