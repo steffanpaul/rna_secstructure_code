@@ -149,7 +149,7 @@ if '--setepochs' in sys.argv:
 
 if PRETRANSFER:
   trial = 'pkhp_d%s_pretran'%(datatype)
-  numepochs = 3
+  numepochs = 1000
 
 
 modelsavename = '%s_%s'%(modelarch, trial)
@@ -168,7 +168,7 @@ def cnn_model(input_shape, output_shape):
           }
   layer2 = {'layer': 'conv1d',
           'num_filters': 96,
-          'filter_size': input_shape[1]-29,
+          'filter_size': 42,#input_shape[1]-29,
           'norm': 'batch',
           'activation': 'relu',
           'dropout': 0.3,
