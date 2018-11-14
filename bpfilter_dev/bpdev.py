@@ -86,20 +86,21 @@ def bp_probmx():
 	return (bpfilter)
 
 
-def avgholbp(ugSS, numbp, dims, meanhol_mut2)
-	#Get the base pair coords
-	bp_rc = bp_coords(ugSS)
+def avgholbp(ugSS, numbp, dims, meanhol_mut2):
+    #Get the base pair coords
+    bp_rc = bp_coords(ugSS)
 
-	#pull out the base pairs from the holistic scores array
-	bp_hols = np.zeros((numbp, dims, dims))
-	  
-	for i,r in enumerate(bp_rc):
-	    bp_hols[i] = meanhol_mut2[r[0],r[1]]
+    #pull out the base pairs from the holistic scores array
+    bp_hols = np.zeros((numbp, dims, dims))
 
-	bp_hols_avg = np.mean(bp_hols, axis=0)
-	plt.figure()
-	sb.heatmap(bp_hols_avg)
-	plt.show()
+    for i,r in enumerate(bp_rc):
+        bp_hols[i] = meanhol_mut2[r[0],r[1]]
+
+        bp_hols_avg = np.mean(bp_hols, axis=0)
+    plt.figure()
+    sb.heatmap(bp_hols_avg)
+    plt.show()
+    return (bp_hols_avg)
 
 
 
@@ -117,7 +118,7 @@ def plotKLDscores_toy(meanhol_mut2, cmap='RdPu'):
 
 
 
-def plotKLDscores_toy(meanhol_mut2, bpugSQ, bpSS, cmap='RdPu'):
+def plotKLDscores(meanhol_mut2, bpugSQ, bpSS, cmap='RdPu'):
 	K = KLD_hol(meanhol_mut2, bp_probmx())
 
 	plt.figure(figsize=(15,6))

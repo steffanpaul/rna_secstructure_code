@@ -149,7 +149,7 @@ if '--setepochs' in sys.argv:
 
 if PRETRANSFER:
   trial = 'pkhp_d%s_pretran'%(datatype)
-  numepochs = 1000
+  numepochs = 100
 
 
 modelsavename = '%s_%s'%(modelarch, trial)
