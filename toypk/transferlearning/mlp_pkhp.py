@@ -61,7 +61,7 @@ if '--somvis' in sys.argv:
 exp = 'toypk'  #for the params folder
 modelarch = 'mlp'
 
-img_folder = 'Images'
+
 datatype = sys.argv[1]
 trialnum = sys.argv[2]
 if SOME:
@@ -72,7 +72,9 @@ if '--setepochs' in sys.argv: #set the number of epochs over which the model wil
 else:
   numepochs = 100
 
-
+img_folder = 'Images_%s_d%s'%(modelarch, datatype)
+if not os.path.isdir(img_folder):
+  os.mkdir(img_folder)
 #---------------------------------------------------------------------------------------------------------------------------------
 
 '''OPEN DATA'''
