@@ -61,7 +61,6 @@ if '--somvis' in sys.argv:
 exp = 'toypk'  #for the params folder
 modelarch = 'resbind'
 
-img_folder = 'Images_cnn'
 datatype = sys.argv[1]
 trialnum = sys.argv[2]
 if SOME:
@@ -72,7 +71,9 @@ if '--setepochs' in sys.argv: #set the number of epochs over which the model wil
 else:
   numepochs = 100
 
-
+img_folder = 'Images_%s_d%s'%(modelarch, datatype)
+if not os.path.isdir(img_folder):
+  os.mkdir(img_folder)
 #---------------------------------------------------------------------------------------------------------------------------------
 
 '''OPEN DATA'''
@@ -168,7 +169,7 @@ def cnn_model(input_shape, output_shape):
           }
   layer2 = {'layer': 'conv1d',
           'num_filters': 96,
-          'filter_size': 42,#input_shape[1]-29,
+          'filter_size': input_shape[1]-29,
           'norm': 'batch',
           'activation': 'relu',
           'dropout': 0.3,
