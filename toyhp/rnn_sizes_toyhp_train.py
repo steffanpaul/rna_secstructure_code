@@ -22,7 +22,7 @@ import pandas as pd
 
 #---------------------------------------------------------------------------------------------------------------------------------
 '''DEFINE LOOP'''
-trials = ['large']#['small', 'med', 'large']
+trials = ['small']#['small', 'med', 'large']
 exp = 'toyhp'  #for both the data folder and the params folder
 exp_data = 'data_%s'%(exp)
 
