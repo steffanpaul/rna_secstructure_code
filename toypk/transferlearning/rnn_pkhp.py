@@ -160,7 +160,15 @@ modelsavename = '%s_%s'%(modelarch, trial)
 
 tf.reset_default_graph()
 
+
+
 num_hidden = 64
+
+if '--sethidden' in sys.argv:
+  num_hidden = int(sys.argv[sys.argv.index('--sethidden')+1])
+  trial = 'pkhp_d%st%se%sh%s'%(datatype, trialnum, numepochs, num_hidden)
+  modelsavename = '%s_%s'%(modelarch, trial)
+
 num_layers = 2
 num_classes = Y_train.shape[1]
 
