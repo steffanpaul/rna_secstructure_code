@@ -75,6 +75,17 @@ def KLD_hol(hol_mut, ref):
             KLD_scores[one, two] = KLD(makeprob(hol_mut[one, two]), ref)
     return (KLD_scores)
 
+def APC_hol(hol):
+    cor_hol = np.zeros_like(hol)
+    wid = len(hol)
+    
+    w_hat = np.mean(hol)
+    for r in range(wid):
+        for c in range(wid):
+            cor_hol[r,c] = hol[r,c] - np.mean(hol[r,:])*np.mean(hol[:,c])/w_hat
+    
+    return (cor_hol)
+
 def makeprob(hol):
     norm = np.sum(np.abs(hol))
     return (hol/norm)
