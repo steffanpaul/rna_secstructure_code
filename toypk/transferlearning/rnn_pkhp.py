@@ -12,7 +12,7 @@ import scipy
 import sys
 sys.path.append('../../../..')
 import mutagenesisfunctions as mf
-import helper 
+import helper
 from deepomics import neuralnetwork as nn
 from deepomics import utils, fit, visualize, saliency
 
@@ -66,7 +66,7 @@ if SOME:
 if '--setepochs' in sys.argv: #set the number of epochs over which the model will train (with no patience)
   numepochs = int(sys.argv[sys.argv.index('--setepochs')+1])
 else:
-  numepochs = 100 
+  numepochs = 100
 
 img_folder = 'Images_%s_d%s'%(modelarch, datatype)
 if not os.path.isdir(img_folder):
@@ -99,18 +99,18 @@ with h5py.File(data_path, 'r') as dataset:
 
 X_pos = np.expand_dims(X_pos, axis=2)
 X_neg = np.expand_dims(X_neg, axis=2)
-    
+
 numdata, seqlen, _, dims = X_pos.shape
 
-if not SOME: 
+if not SOME:
     X_data = np.concatenate((X_pos, X_neg), axis=0)
     Y_data = np.concatenate((Y_pos, Y_neg), axis=0)
-if SOME: 
+if SOME:
 
     X_data = np.concatenate((X_pos[:numdata//portion], X_neg[:numdata//portion]), axis=0)
-    Y_data = np.concatenate((Y_pos[:numdata//portion], Y_neg[:numdata//portion]), axis=0) 
+    Y_data = np.concatenate((Y_pos[:numdata//portion], Y_neg[:numdata//portion]), axis=0)
 # get validation and test set from training set
-if not TRANSFER: #set the proportions for pretransfer 
+if not TRANSFER: #set the proportions for pretransfer
     train_frac = 0.5 #This means the pretransfer model is training on 25,000 pos and 25,000 neg sequences
     valid_frac = 0.2
     test_frac = 0.3
@@ -178,20 +178,20 @@ Y = tf.placeholder(tf.float32, [None, num_classes], name='ouputs')
 keep_prob = tf.placeholder(tf.float32, name='keep_prob')
 
 lstm1_fw_cell = tf.nn.rnn_cell.LSTMCell(num_hidden)#, forget_bias=1.0)
-lstm1_fw_cell = tf.contrib.rnn.DropoutWrapper(lstm1_fw_cell, 
-                                         output_keep_prob=keep_prob, 
+lstm1_fw_cell = tf.contrib.rnn.DropoutWrapper(lstm1_fw_cell,
+                                         output_keep_prob=keep_prob,
                                          state_keep_prob=1.0,
                                          variational_recurrent=False,
                                          dtype=tf.float32)
 
 lstm1_bw_cell = tf.nn.rnn_cell.LSTMCell(num_hidden)#, forget_bias=1.0)
-lstm1_bw_cell = tf.contrib.rnn.DropoutWrapper(lstm1_bw_cell, 
-                                         output_keep_prob=keep_prob, 
+lstm1_bw_cell = tf.contrib.rnn.DropoutWrapper(lstm1_bw_cell,
+                                         output_keep_prob=keep_prob,
                                          state_keep_prob=1.0,
                                          variational_recurrent=False,
                                          dtype=tf.float32)
 
-outputs1, states1 = tf.nn.bidirectional_dynamic_rnn(lstm1_fw_cell, lstm1_bw_cell, X, 
+outputs1, states1 = tf.nn.bidirectional_dynamic_rnn(lstm1_fw_cell, lstm1_bw_cell, X,
                                                    sequence_length=helper.length(X), dtype=tf.float32,
                                                    scope='BLSTM_1')
 
@@ -201,15 +201,15 @@ outputs_forward, outputs_backward = outputs1
 concat_outputs = tf.concat([outputs_forward, outputs_backward], axis=2, name='intermediate')
 
 lstm2_fw_cell = tf.nn.rnn_cell.LSTMCell(num_hidden)#, forget_bias=1.0)
-lstm2_fw_cell = tf.contrib.rnn.DropoutWrapper(lstm2_fw_cell, 
-                                         output_keep_prob=keep_prob, 
+lstm2_fw_cell = tf.contrib.rnn.DropoutWrapper(lstm2_fw_cell,
+                                         output_keep_prob=keep_prob,
                                          state_keep_prob=1.0,
                                          variational_recurrent=False,
                                          dtype=tf.float32)
 
 lstm2_bw_cell = tf.nn.rnn_cell.LSTMCell(num_hidden)#, forget_bias=1.0)
-lstm2_bw_cell = tf.contrib.rnn.DropoutWrapper(lstm2_bw_cell, 
-                                         output_keep_prob=keep_prob, 
+lstm2_bw_cell = tf.contrib.rnn.DropoutWrapper(lstm2_bw_cell,
+                                         output_keep_prob=keep_prob,
                                          state_keep_prob=1.0,
                                          variational_recurrent=False,
                                          dtype=tf.float32)
@@ -226,7 +226,7 @@ concat_states = tf.concat([states_forward[1], states_backward[1]], axis=1, name=
 W_out = tf.Variable(tf.random_normal([num_hidden*2, num_classes]))
 b_out = tf.Variable(tf.random_normal([num_classes]))
 
-#last = tf.gather(outputs, int(outputs.get_shape()[1])-1)  
+#last = tf.gather(outputs, int(outputs.get_shape()[1])-1)
 #last = int(outputs.get_shape()[1]) - 1
 logits = tf.matmul(concat_states, W_out) + b_out
 predictions = tf.nn.sigmoid(logits)
@@ -286,27 +286,27 @@ if TRAIN:
       print("making directory: " + save_path)
   params_filename = '%s_best'%(modelsavename)
   params_path = os.path.join(save_path, params_filename)
-      
+
   wait=0
   min_loss = 1e10
   for epoch in range(numepochs):
       print('epoch: '+ str(epoch+1))
-      
+
 
       #ITERATE OVER TRAIN SEQUENCES
       num_batches = len(train_batches)
       shuffled_batches = []
       for i in np.random.permutation(num_batches):
           shuffled_batches.append(train_batches[i])
-          
+
       loss = 0
       acc = 0
       start_time = time.time()
       for i, batch in enumerate(shuffled_batches):
-          batch_loss, batch_acc, _ = sess.run([total_loss, accuracy, train_op], feed_dict={X: batch[0], 
-                                                                                        Y: batch[1], 
+          batch_loss, batch_acc, _ = sess.run([total_loss, accuracy, train_op], feed_dict={X: batch[0],
+                                                                                        Y: batch[1],
                                                                                         keep_prob: 0.5,
-                                                                                        learning_rate: 0.0003})            
+                                                                                        learning_rate: 0.0003})
           loss += batch_loss
           acc += batch_acc
 
@@ -316,12 +316,12 @@ if TRAIN:
           spaces = ' '*int(bar_length-round(percent*bar_length))
           sys.stdout.write("\r[%s] %.1f%% -- remaining time=%.2fs -- loss=%.5f -- acc=%.5f" \
           %(progress+spaces, percent*100, remaining_time, loss/(i+1), acc/(i+1)))
-          
+
       sys.stdout.write("\r[%s] %.1f%% -- elapsed time=%.2fs -- loss=%.5f -- acc=%.5f\n" \
       %(progress+spaces, percent*100, time.time()-start_time, loss/(i+1), acc/(i+1)))
       sys.stdout.write("\n")
-      
-      
+
+
       #ITERATE OVER VALID SEQUENCES
       num_batches = len(valid_batches)
       loss = 0
@@ -330,16 +330,16 @@ if TRAIN:
       valid_truth = []
       start_time = time.time()
       for i, batch in enumerate(valid_batches):
-          batch_loss, batch_predict = sess.run([total_loss, predictions], feed_dict={X: batch[0], 
-                                                                                  Y: batch[1], 
-                                                                                  keep_prob: 1.0})            
+          batch_loss, batch_predict = sess.run([total_loss, predictions], feed_dict={X: batch[0],
+                                                                                  Y: batch[1],
+                                                                                  keep_prob: 1.0})
           loss += batch_loss
           valid_predictions.append(batch_predict)
           valid_truth.append(batch[1])
       valid_loss = loss/num_batches
       valid_predictions = np.vstack(valid_predictions)
       valid_truth = np.vstack(valid_truth)
-      
+
       correct = np.mean(np.equal(valid_truth, np.round(valid_predictions)))
       auc_roc, roc_curves = helper.roc(valid_truth, valid_predictions)
       auc_pr, pr_curves = helper.pr(valid_truth, valid_predictions)
@@ -347,25 +347,25 @@ if TRAIN:
       print("  valid acc   = "+str(np.nanmean(correct)))
       print("  valid AUROC = "+str(np.nanmean(auc_roc)))
       print("  valid AUPRC = "+str(np.nanmean(auc_pr)))
-      
+
       # check if current validation loss is lower, if so, save parameters, if not check patience
       if valid_loss < min_loss:
           print("  Lower validation loss found. Saving parameters to: "+params_path)
-          
+
           # save model parameters
           saver = tf.train.Saver()
           saver.save(sess, save_path=params_path)
-          
+
           # set minimum loss to the current validation loss
           min_loss = valid_loss
-          
+
           # reset wait time
           wait = 0
       else:
-          
+
           # add to wait time
           wait += 1
-          
+
           # check to see if patience has run out
           if wait == patience:
               print("Patience ran out... early stopping!")
@@ -407,13 +407,13 @@ bar_length = 25
 
 for i, batch in enumerate(batches):
 
-    batch_loss, batch_predict, batch_logits = sess.run([total_loss, predictions, logits], feed_dict={X: batch[0], 
-                                                                            Y: batch[1], 
-                                                                            keep_prob: 1.0})            
+    batch_loss, batch_predict, batch_logits = sess.run([total_loss, predictions, logits], feed_dict={X: batch[0],
+                                                                            Y: batch[1],
+                                                                            keep_prob: 1.0})
     loss += batch_loss
     valid_predictions.append(batch_predict)
     valid_truth.append(batch[1])
-    
+
     remaining_time = (time.time()-start_time)*(num_batches-(i+1))/(i+1)
     percent = float(i)/num_batches
     progress = '='*int(round(percent*bar_length))
@@ -463,7 +463,7 @@ if SOMCALC:
         idxlen = len(ugidx)
 
         # get wild-type score
-        wt_score = sess.run(predictions, feed_dict={X: np.expand_dims(X_val, axis=0), keep_prob: 1.0})[0]     
+        wt_score = sess.run(predictions, feed_dict={X: np.expand_dims(X_val, axis=0), keep_prob: 1.0})[0]
 
         # generate mutagenesis sequences
         num_mut = idxlen**2*dims**2
@@ -475,9 +475,9 @@ if SOMCALC:
                 for nuc1 in range(dims):
                     for nuc2 in range(dims):
                         X_mut[k, position1, :] = 0
-                        X_mut[k, position1, nuc1] = 1        
+                        X_mut[k, position1, nuc1] = 1
                         X_mut[k, position2, :] = 0
-                        X_mut[k, position2, nuc2] = 1        
+                        X_mut[k, position2, nuc2] = 1
                         k += 1
 
         # get second order mutagenesis score
@@ -485,10 +485,10 @@ if SOMCALC:
         mut_scores = []
         batches = helper.batch_generator(X_mut, batch_size=512, MAX=None, shuffle_data=False)
         for i, batch in enumerate(batches):
-            batch_predict = sess.run(predictions, feed_dict={X: batch, keep_prob: 1.0})            
+            batch_predict = sess.run(predictions, feed_dict={X: batch, keep_prob: 1.0})
             mut_scores.append(batch_predict)
         mut_scores = np.vstack(mut_scores)
-        
+
         # calculate log-odds score
         log_odds = np.log(mut_scores + 1e-7) - np.log(wt_score + 1e-7)
 

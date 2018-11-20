@@ -10,7 +10,7 @@ ALPH     RNA
 RF       no
 CONS     yes
 MAP      yes
-DATE     Fri Nov 16 11:16:19 2018
+DATE     Tue Nov 20 16:37:14 2018
 COM      [1] cmbuild riboswitch.cm RF01725.sto
 PBEGIN   0.05
 PEND     0.05
@@ -434,7 +434,7 @@ MM    no
 CONS  yes
 CS    yes
 MAP   yes
-DATE  Fri Nov 16 11:16:19 2018
+DATE  Tue Nov 20 16:37:14 2018
 COM   [1] cmbuild riboswitch.cm RF01725.sto
 NSEQ  437
 EFFN  19.460823
