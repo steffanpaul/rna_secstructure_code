@@ -25,7 +25,7 @@ import pandas as pd
 '''DEFINE ACTIONS'''
 TRAIN = False
 TEST = False
-WRITE = False
+WRITE = True
 FOM = False
 SOMCALC = False
 SOMVIS = False
