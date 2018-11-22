@@ -12,7 +12,7 @@ import scipy
 import sys
 sys.path.append('../../../..')
 import mutagenesisfunctions as mf
-import helper 
+import helper
 from deepomics import neuralnetwork as nn
 from deepomics import utils, fit, visualize, saliency
 
@@ -59,7 +59,7 @@ filename = 'riboswitch_full.hdf5'
 with h5py.File(filename, 'r') as dataset:
     X_data = np.array(dataset['X_data'])
     Y_data = np.array(dataset['Y_data'])
-    
+
 numdata, seqlen, _, dims = X_data.shape
 dims = dims-1
 
@@ -67,23 +67,29 @@ dims = dims-1
 ungapped = True
 if ungapped:
     X_data = X_data[:, :, :, :dims]
-    
+
 # get validation and test set from training set
 train_frac = 0.8
 valid_frac = 0.1
 test_frac = 1-0.8-valid_frac
 N = numdata
-split_1 = int(N*(1-valid_frac-test_frac))
-split_2 = int(N*(1-test_frac))
-shuffle = np.random.permutation(N)
+posidx = np.random.permutation(np.arange(N//2))
+negidx = np.random.permutation(np.arange(N//2, N))
+split_1 = int((N//2)*(1-valid_frac-test_frac))
+split_2 = int((N//2)*(1-test_frac))
+#shuffle = np.random.permutation(N)
+
+trainidx = np.random.permutation(np.concatenate([posidx[:split_1], negidx[:split_1]]))
+valididx = np.random.permutation(np.concatenate([posidx[split_1:split_2], negidx[split_1:split_2]]))
+testidx = np.random.permutation(np.concatenate([posidx[split_2:], negidx[split_2:]]))
 
 #set up dictionaries
-train = {'inputs': X_data[shuffle[:split_1]], 
-         'targets': Y_data[shuffle[:split_1]]}
-valid = {'inputs': X_data[shuffle[split_1:split_2]], 
-         'targets': Y_data[shuffle[split_1:split_2]]}
-test = {'inputs': X_data[shuffle[split_2:]], 
-         'targets': Y_data[shuffle[split_2:]]}
+train = {'inputs': X_data[trainidx],
+         'targets': Y_data[trainidx]}
+valid = {'inputs': X_data[valididx],
+         'targets': Y_data[valididx]}
+test = {'inputs': X_data[testidx],
+         'targets': Y_data[testidx]}
 
 print ('Data extraction and dict construction completed in: ' + mf.sectotime(time.time() - starttime))
 
@@ -184,22 +190,22 @@ if TRAIN:
   #Train the model
 
   data = {'train': train, 'valid': valid}
-  fit.train_minibatch(sess, nntrainer, data, 
-                    batch_size=100, 
-                    num_epochs=100,
-                    patience=100, 
-                    verbose=2, 
-                    shuffle=True, 
+  fit.train_minibatch(sess, nntrainer, data,
+                    batch_size=1000,
+                    num_epochs=1000,
+                    patience=100,
+                    verbose=2,
+                    shuffle=True,
                     save_all=False)
 
 
   sess.close()
 
-  #---------------------------------------------------------------------------------------------------------------------------------      
+  #---------------------------------------------------------------------------------------------------------------------------------
 '''TEST'''
 sess = utils.initialize_session()
 if TEST:
-  
+
   # set best parameters
   nntrainer.set_best_parameters(sess)
 
@@ -221,10 +227,10 @@ if FOM:
   plots = 3
   num_plots = range(plots)
   fig = plt.figure(figsize=(15,plots*2+1))
-  for ii in num_plots: 
+  for ii in num_plots:
 
       X = np.expand_dims(test['inputs'][plot_index[10000+ii]], axis=0)
-      
+
       ax = fig.add_subplot(plots, 1, ii+1)
       mf.fom_saliency_mul(X, layer='dense_1_bias', alphabet='rna', nntrainer=nntrainer, sess=sess, ax =ax)
       fom_file = modelsavename + 'FoM' + '.png'
@@ -242,10 +248,10 @@ if SOMCALC:
   arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
   Xdict = test['inputs'][plot_index[:num_summary]]
 
-  mean_mut2 = mf.som_average_ungapped(Xdict, ugidx, arrayspath, nntrainer, sess, progress='on', 
+  mean_mut2 = mf.som_average_ungapped(Xdict, ugidx, arrayspath, nntrainer, sess, progress='on',
                                              save=True, layer='dense_1_bias')
 
-if SOMVIS:  
+if SOMVIS:
   #Load the saved data
   num_summary = 50
   arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
@@ -279,4 +285,3 @@ if SOMVIS:
   som_file = os.path.join(img_folder, som_file)
   plt.savefig(som_file)
   plt.close()
-

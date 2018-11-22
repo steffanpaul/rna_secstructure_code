@@ -10,8 +10,10 @@ import tensorflow as tf
 import scipy
 
 import sys
+import helptransfer as htf
 sys.path.append('../../../..')
 import mutagenesisfunctions as mf
+import bpdev as bd
 import helper
 from deepomics import neuralnetwork as nn
 from deepomics import utils, fit, visualize, saliency
@@ -122,17 +124,23 @@ if TRANSFER or JUSTPKHP:
 numdata, seqlen, _, dims = X_data.shape
 
 N = numdata
-split_1 = int(N*(1-valid_frac-test_frac))
-split_2 = int(N*(1-test_frac))
-shuffle = np.random.permutation(N)
+posidx = np.random.permutation(np.arange(N//2))
+negidx = np.random.permutation(np.arange(N//2, N))
+split_1 = int((N//2)*(1-valid_frac-test_frac))
+split_2 = int((N//2)*(1-test_frac))
+#shuffle = np.random.permutation(N)
 
-X_train = X_data[shuffle[:split_1], :, 0, :]
-X_valid = X_data[shuffle[split_1:split_2], :, 0, :]
-X_test = X_data[shuffle[split_2:], :, 0, :]
+trainidx = np.random.permutation(np.concatenate([posidx[:split_1], negidx[:split_1]]))
+valididx = np.random.permutation(np.concatenate([posidx[split_1:split_2], negidx[split_1:split_2]]))
+testidx = np.random.permutation(np.concatenate([posidx[split_2:], negidx[split_2:]]))
 
-Y_train = Y_data[shuffle[:split_1]]
-Y_valid = Y_data[shuffle[split_1:split_2]]
-Y_test = Y_data[shuffle[split_2:]]
+X_train = X_data[trainidx, :, 0, :]
+X_valid = X_data[valididx, :, 0, :]
+X_test = X_data[testidx, :, 0, :]
+
+Y_train = Y_data[trainidx]
+Y_valid = Y_data[valididx]
+Y_test = Y_data[testidx]
 
 print ('Data extraction and dict construction completed in: ' + mf.sectotime(time.time() - starttime))
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -147,7 +155,7 @@ if '--setepochs' in sys.argv:
 
 if PRETRANSFER:
   trial = 'pkhp_d%s_pretran'%(datatype)
-  numepochs = 100
+  numepochs = 5
 
 
 modelsavename = '%s_%s'%(modelarch, trial)
@@ -263,21 +271,13 @@ accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
 
 #---------------------------------------------------------------------------------------------
+#SET UP A CLAUSE TO INITIATE TRANSFER LEARNING
+if TRANSFER and TRAIN:
+    #make the pretransfer file a copy of what we want now
+    htf.import_pretransfer(params_results, exp, datatype, modelarch, modelsavename, isrnn=True)
 
 '''TRAIN MODEL'''
 if TRAIN:
-  # start session
-  sess = tf.Session()
-  sess.run(tf.global_variables_initializer())
-
-  batch_size = 128
-  train_batches = helper.bucket_generator(X_train, Y_train, batch_size)
-  valid_batches = helper.bucket_generator(X_valid, Y_valid, batch_size)
-
-  #numepochs = called up above
-  bar_length = 25
-  patience = numepochs
-
 
   # path to save results
   save_path = os.path.join(params_results, exp)
@@ -286,6 +286,24 @@ if TRAIN:
       print("making directory: " + save_path)
   params_filename = '%s_best'%(modelsavename)
   params_path = os.path.join(save_path, params_filename)
+
+  # start session
+  sess = tf.Session()
+  sess.run(tf.global_variables_initializer())
+  if TRANSFER:
+      # restore trained parameters
+      saver = tf.train.Saver()
+      saver.restore(sess, save_path=params_path)
+      print ('Restoring parameters from: %s'%(params_path))
+
+
+  batch_size = 128
+  train_batches = helper.bucket_generator(X_train, Y_train, batch_size)
+  valid_batches = helper.bucket_generator(X_valid, Y_valid, batch_size)
+
+  #numepochs = called up above
+  bar_length = 25
+  patience = numepochs
 
   wait=0
   min_loss = 1e10
@@ -555,6 +573,13 @@ if SOMVIS:
     C = np.sum((norm_mean_mut2*bpfilter).reshape(seqlen,seqlen,dims*dims), axis=2)
     #C = C - np.mean(C)
     #C = C/np.max(C)
+    ugSS, numbp, numug, bpugSQ = htf.pkhp_SS()
+    if datatype == '6' and not TRANSFER:
+      ugSS = ugSS[1] #only extract the non-nested base pairs
+      numbp = 3
+    #get base pairing scores
+    totscore = bd.bp_totscore(ugSS, C, numug)
+    ppv = bd.bp_ppv(C, ugSS, numbp, numug)
 
     color = 'Oranges'
 
@@ -572,5 +597,16 @@ if SOMVIS:
     som_file = os.path.join(img_folder, som_file)
     plt.savefig(som_file)
     plt.close()
+
+    if WRITE:
+      tran = 'notransfer'
+      if TRANSFER:
+          tran = 'transfer'
+      numpos = len(X_train)//2
+      metricsline = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s'%(modelarch, datatype, trialnum, numepochs, tran,
+                        numpos, loss, mean_vals[0], mean_vals[1], mean_vals[2], totscore, ppv)
+      fd = open('test_metrics.csv', 'a')
+      fd.write(metricsline+'\n')
+      fd.close()
 
 #---------------------------------------------------------------------------------------------

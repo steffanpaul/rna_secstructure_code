@@ -12,7 +12,8 @@ import scipy
 import sys
 sys.path.append('../../..')
 import mutagenesisfunctions as mf
-import helper 
+import bpdev as bd
+import helper
 from deepomics import neuralnetwork as nn
 from deepomics import utils, fit, visualize, saliency
 
@@ -44,18 +45,18 @@ if '--somvis' in sys.argv:
 #---------------------------------------------------------------------------------------------------------------------------------
 '''DEFINE LOOP'''
 trials = ['trna', 'riboswitch', 'glna']
-#trainportion_list = [0.7, 0.5, 0.3, 0.1] #0.7 is the original trainportion we've been working with
-#trainportion_list= [0.08, 0.06, 0.04, 0.02, 0.01] 
-trainportion_list = [0.005, 0.001]
 
-datafiles = {'glna': ['glna_100k_d8.hdf5', '../../data_RFAM/glnAsim_100k.sto'], 
+#0.7 is the original trainportion we've been working with
+#trainportion_list = [0.7, 0.5, 0.3, 0.1]
+#trainportion_list= [0.08, 0.06, 0.04, 0.02, 0.01]
+trainportion_list = [0.7, 0.5, 0.3, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01, 0.005, 0.001]
+
+datafiles = {'glna': ['glna_100k_d8.hdf5', '../../data_RFAM/glnAsim_100k.sto'],
               'trna': ['trna_100k_d4.hdf5', '../../data_RFAM/trnasim_100k.sto'],
               'riboswitch': ['riboswitch_100k_d4.hdf5', '../../data_RFAM/riboswitch_100k.sto'],}
 
 exp = 'trainsize'  #for the params folder
 
-
-img_folder = 'Images'
 
 for t in trials:
   for trainportion in trainportion_list:
@@ -74,7 +75,7 @@ for t in trials:
     with h5py.File(data_path, 'r') as dataset:
         X_data = np.array(dataset['X_data'])
         Y_data = np.array(dataset['Y_data'])
-        
+
     numdata, seqlen, _, dims = X_data.shape
     dims = dims-1
 
@@ -82,7 +83,7 @@ for t in trials:
     ungapped = True
     if ungapped:
         X_data = X_data[:, :, :, :dims]
-        
+
     # get validation and test set from training set
     train_frac = trainportion
     valid_frac = 0.1
@@ -93,11 +94,11 @@ for t in trials:
     shuffle = np.random.permutation(N)
 
     #set up dictionaries
-    train = {'inputs': X_data[shuffle[:split_1]], 
+    train = {'inputs': X_data[shuffle[:split_1]],
              'targets': Y_data[shuffle[:split_1]]}
-    valid = {'inputs': X_data[shuffle[split_1:split_2]], 
+    valid = {'inputs': X_data[shuffle[split_1:split_2]],
              'targets': Y_data[shuffle[split_1:split_2]]}
-    test = {'inputs': X_data[shuffle[split_2:]], 
+    test = {'inputs': X_data[shuffle[split_2:]],
              'targets': Y_data[shuffle[split_2:]]}
 
     print ('Data extraction and dict construction completed in: ' + mf.sectotime(time.time() - starttime))
@@ -128,8 +129,18 @@ for t in trials:
     params_results = '../../results'
 
     modelarch = 'mlp'
-    trial = t + '_tp00%.0f'%(trainportion*1000)
+    if trainportion >= 0.1:
+        tp = '_tp%.0f'%(trainportion*100)
+    elif trainportion >= 0.01:
+        tp = '_tp0%.0f'%(trainportion*100)
+    elif trainportion >= 0.001:
+        tp = '_tp00%.0f'%(trainportion*1000)
+    trial = t + tp
     modelsavename = '%s_%s'%(modelarch, trial)
+
+    img_folder = 'Images_%s_%s'%(modelarch, t)
+    if not os.path.isdir(img_folder):
+      os.mkdir(img_folder)
 
 
 
@@ -187,7 +198,7 @@ for t in trials:
     param_path = os.path.join(save_path, modelsavename)
     nntrainer = nn.NeuralTrainer(nnmodel, save='best', file_path=param_path)
 
-    
+
 
     #---------------------------------------------------------------------------------------------------------------------------------
 
@@ -199,32 +210,28 @@ for t in trials:
       #Train the model
 
       data = {'train': train, 'valid': valid}
-      fit.train_minibatch(sess, nntrainer, data, 
-                        batch_size=100, 
+      fit.train_minibatch(sess, nntrainer, data,
+                        batch_size=100,
                         num_epochs=100,
-                        patience=40, 
-                        verbose=2, 
-                        shuffle=True, 
+                        patience=40,
+                        verbose=2,
+                        shuffle=True,
                         save_all=False)
 
 
       sess.close()
 
-      #---------------------------------------------------------------------------------------------------------------------------------      
+      #---------------------------------------------------------------------------------------------------------------------------------
     '''TEST'''
     sess = utils.initialize_session()
     if TEST:
-      
+
       # set best parameters
       nntrainer.set_best_parameters(sess)
 
       # test model
       loss, mean_vals, std_vals = nntrainer.test_model(sess, test, name='test')
-      if WRITE:
-        metricsline = '%s,%s,%s,%s,%s,%s,%s'%(exp, modelarch, trial, loss, mean_vals[0], mean_vals[1], mean_vals[2])
-        fd = open('test_metrics.csv', 'a')
-        fd.write(metricsline+'\n')
-        fd.close()
+
     '''SORT ACTIVATIONS'''
     nntrainer.set_best_parameters(sess)
     predictionsoutput = nntrainer.get_activations(sess, test, layer='output')
@@ -236,10 +243,10 @@ for t in trials:
       plots = 3
       num_plots = range(plots)
       fig = plt.figure(figsize=(15,plots*2+1))
-      for ii in num_plots: 
+      for ii in num_plots:
 
           X = np.expand_dims(test['inputs'][plot_index[10000+ii]], axis=0)
-          
+
           ax = fig.add_subplot(plots, 1, ii+1)
           mf.fom_saliency_mul(X, layer='dense_1_bias', alphabet='rna', nntrainer=nntrainer, sess=sess, ax =ax)
           fom_file = modelsavename + 'FoM' + '.png'
@@ -257,10 +264,10 @@ for t in trials:
       arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
       Xdict = test['inputs'][plot_index[:num_summary]]
 
-      mean_mut2 = mf.som_average_ungapped(Xdict, ugidx, arrayspath, nntrainer, sess, progress='on', 
+      mean_mut2 = mf.som_average_ungapped(Xdict, ugidx, arrayspath, nntrainer, sess, progress='on',
                                                  save=True, layer='dense_1_bias')
 
-    if SOMVIS:  
+    if SOMVIS:
       #Load the saved data
       num_summary = 1000
       arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
@@ -283,8 +290,11 @@ for t in trials:
 
       C = (norm_meanhol_mut2*bpfilter)
       C = np.sum((C).reshape(numug,numug,dims*dims), axis=2)
-      C = C - np.mean(C)
-      C = C/np.max(C)
+      #C = C - np.mean(C)
+      #C = C/np.max(C)
+      #get base pairing scores
+      totscore = bd.bp_totscore(ugSS, C, numug)
+      ppv = bd.bp_ppv(C, ugSS, numbp, numug)
 
       plt.figure(figsize=(8,6))
       sb.heatmap(C,vmin=None, cmap='Blues', linewidth=0.0)
@@ -295,24 +305,9 @@ for t in trials:
       plt.savefig(som_file)
       plt.close()
 
-'''
-      blocklen = np.sqrt(np.product(meanhol_mut2.shape)).astype(int)
-      S = np.zeros((blocklen, blocklen))
-      i,j,k,l = meanhol_mut2.shape
-
-      for ii in range(i):
-          for jj in range(j):
-              for kk in range(k):
-                  for ll in range(l):
-                      S[(4*ii)+kk, (4*jj)+ll] = meanhol_mut2[ii,jj,kk,ll]
-
-      plt.figure(figsize=(15,15))
-      plt.imshow(S,  cmap='Reds', vmin=None)
-      plt.colorbar()
-      plt.title('Blockvis of all mutations: %s %s %s'%(exp, modelarch, trial))
-
-      som_file = modelsavename + 'SoM_blockvis' + '.png'
-      som_file = os.path.join(img_folder, som_file)
-      plt.savefig(som_file)
-      plt.close()
-'''
+    if WRITE:
+        numpos = len(train['inputs'])//2
+        metricsline = '%s,%s,%s,%s,%s,%s,%s,%s,%s'%(modelarch, t, numpos, loss, mean_vals[0], mean_vals[1], mean_vals[2], totscore, ppv)
+        fd = open('test_metrics.csv', 'a')
+        fd.write(metricsline+'\n')
+        fd.close()

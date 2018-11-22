@@ -10,9 +10,11 @@ import tensorflow as tf
 import scipy
 
 import sys
+import helptransfer as htf
 sys.path.append('../../../..')
 import mutagenesisfunctions as mf
-import helper 
+import bpdev as bd
+import helper
 from deepomics import neuralnetwork as nn
 from deepomics import utils, fit, visualize, saliency
 
@@ -102,18 +104,19 @@ with h5py.File(data_path, 'r') as dataset:
 
 X_pos = np.expand_dims(X_pos, axis=2)
 X_neg = np.expand_dims(X_neg, axis=2)
-    
+
 numdata, seqlen, _, dims = X_pos.shape
 
-if not SOME: 
+
+if not SOME:
     X_data = np.concatenate((X_pos, X_neg), axis=0)
     Y_data = np.concatenate((Y_pos, Y_neg), axis=0)
-if SOME: 
+if SOME:
 
     X_data = np.concatenate((X_pos[:numdata//portion], X_neg[:numdata//portion]), axis=0)
-    Y_data = np.concatenate((Y_pos[:numdata//portion], Y_neg[:numdata//portion]), axis=0) 
+    Y_data = np.concatenate((Y_pos[:numdata//portion], Y_neg[:numdata//portion]), axis=0)
 # get validation and test set from training set
-if not TRANSFER: #set the proportions for pretransfer 
+if not TRANSFER: #set the proportions for pretransfer
     train_frac = 0.5 #This means the pretransfer model is training on 25,000 pos and 25,000 neg sequences
     valid_frac = 0.2
     test_frac = 0.3
@@ -125,18 +128,23 @@ if TRANSFER or JUSTPKHP:
 numdata, seqlen, _, dims = X_data.shape
 
 N = numdata
-split_1 = int(N*(1-valid_frac-test_frac))
-split_2 = int(N*(1-test_frac))
-shuffle = np.random.permutation(N)
+posidx = np.random.permutation(np.arange(N//2))
+negidx = np.random.permutation(np.arange(N//2, N))
+split_1 = int((N//2)*(1-valid_frac-test_frac))
+split_2 = int((N//2)*(1-test_frac))
+#shuffle = np.random.permutation(N)
+
+trainidx = np.random.permutation(np.concatenate([posidx[:split_1], negidx[:split_1]]))
+valididx = np.random.permutation(np.concatenate([posidx[split_1:split_2], negidx[split_1:split_2]]))
+testidx = np.random.permutation(np.concatenate([posidx[split_2:], negidx[split_2:]]))
 
 #set up dictionaries
-train = {'inputs': X_data[shuffle[:split_1]], 
-         'targets': Y_data[shuffle[:split_1]]}
-valid = {'inputs': X_data[shuffle[split_1:split_2]], 
-         'targets': Y_data[shuffle[split_1:split_2]]}
-test = {'inputs': X_data[shuffle[split_2:]], 
-         'targets': Y_data[shuffle[split_2:]]}
-print (len(train['inputs']))
+train = {'inputs': X_data[trainidx],
+         'targets': Y_data[trainidx]}
+valid = {'inputs': X_data[valididx],
+         'targets': Y_data[valididx]}
+test = {'inputs': X_data[testidx],
+         'targets': Y_data[testidx]}
 print ('Data extraction and dict construction completed in: ' + mf.sectotime(time.time() - starttime))
 #---------------------------------------------------------------------------------------------------------------------------------
 
@@ -220,7 +228,7 @@ output_shape = train['targets'].shape
 model_layers, optimization = cnn_model(input_shape, output_shape)
 
 # build neural network class
-nnmodel = nn.NeuralNet(seed=247)
+nnmodel = nn.NeuralNet(seed=42)
 nnmodel.build_layers(model_layers, optimization)
 
 # compile neural trainer
@@ -231,7 +239,6 @@ nntrainer = nn.NeuralTrainer(nnmodel, save='best', file_path=param_path)
 #SET UP A CLAUSE TO INITIATE TRANSFER LEARNING
 if TRANSFER and TRAIN:
     #make the pretransfer file a copy of what we want now
-    import helptransfer as htf
     htf.import_pretransfer(params_results, exp, datatype, modelarch, modelsavename)
 
 
@@ -250,32 +257,28 @@ if TRAIN:
     #Train the model
 
     data = {'train': train, 'valid': valid}
-    fit.train_minibatch(sess, nntrainer, data, 
-                    batch_size=100, 
+    fit.train_minibatch(sess, nntrainer, data,
+                    batch_size=100,
                     num_epochs=numepochs,
-                    patience=numepochs, 
-                    verbose=2, 
-                    shuffle=True, 
+                    patience=numepochs,
+                    verbose=2,
+                    shuffle=True,
                     save_all=False)
 
 
     sess.close()
 
-  #---------------------------------------------------------------------------------------------------------------------------------      
+  #---------------------------------------------------------------------------------------------------------------------------------
 '''TEST'''
 sess = utils.initialize_session()
 if TEST:
-  
+
   # set best parameters
   nntrainer.set_best_parameters(sess)
 
   # test model
   loss, mean_vals, std_vals = nntrainer.test_model(sess, test, name='test')
-  if WRITE:
-    metricsline = '%s,%s,%s,%s,%s,%s,%s'%(exp, modelarch, trial, loss, mean_vals[0], mean_vals[1], mean_vals[2])
-    fd = open('test_metrics.csv', 'a')
-    fd.write(metricsline+'\n')
-    fd.close()
+
 '''SORT ACTIVATIONS'''
 nntrainer.set_best_parameters(sess)
 predictionsoutput = nntrainer.get_activations(sess, test, layer='output')
@@ -287,7 +290,7 @@ if FOM:
   plots = 3
   num_plots = range(plots)
   fig = plt.figure(figsize=(15,plots*2+1))
-  for ii in num_plots: 
+  for ii in num_plots:
     X = np.expand_dims(test['inputs'][plot_index[ii]], axis=0)
 
     ax = fig.add_subplot(plots, 1, ii+1)
@@ -306,21 +309,17 @@ if FOM:
 
 '''Som calc'''
 if SOMCALC:
-  num_summary = 500
-  if num_summary > X_data.shape[0]//2:
-    num_summary = X_data.shape[0]//2
+  num_summary = np.min([500,len(test['inputs'])//2])
 
   arrayspath = 'Arrays_cnn/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
   Xdict = test['inputs'][plot_index[:num_summary]]
 
-  mean_mut2 = mf.som_average_ungapped_logodds(Xdict, range(seqlen), arrayspath, nntrainer, sess, progress='short', 
+  mean_mut2 = mf.som_average_ungapped_logodds(Xdict, range(seqlen), arrayspath, nntrainer, sess, progress='short',
                                              save=True, layer='dense_1_bias')
 
-if SOMVIS:  
+if SOMVIS:
   #Load the saved data
-  num_summary = 500
-  if num_summary > X_data.shape[0]//2:
-    num_summary = X_data.shape[0]//2
+  num_summary = np.min([500,len(test['inputs'])//2])
   arrayspath = 'Arrays_cnn/%s_%s_so%.0fk.npy'%(exp, modelsavename, num_summary/1000)
   mean_mut2 = np.load(arrayspath)
 
@@ -341,15 +340,22 @@ if SOMVIS:
 
   C = (norm_meanhol_mut2*bpfilter)
   C = np.sum((C).reshape(seqlen,seqlen,dims*dims), axis=2)
-  C = C - np.mean(C)
-  C = C/np.max(C)
+  #C = C - np.mean(C)
+  #C = C/np.max(C)
+  ugSS, numbp, numug, bpugSQ = htf.pkhp_SS()
+  if datatype == '6' and not TRANSFER:
+      ugSS = ugSS[1] #only extract the non-nested base pairs
+      numbp = 3
+  #get base pairing scores
+  totscore = bd.bp_totscore(ugSS, C, numug)
+  ppv = bd.bp_ppv(C, ugSS, numbp, numug)
 
   plt.figure(figsize=(8,6))
-  sb.heatmap(C,vmin=None, cmap='Blues', linewidth=0.0)
+  sb.heatmap(C,vmin=None, cmap='RdPu', linewidth=0.0)
   plt.title('Base Pair scores: %s %s '%(exp, modelsavename))
 
   if JUSTPKHP:
-    som_file = modelsavename + 'SoM_bpfilter' + '_justkhp' + '.png'
+    som_file = modelsavename + 'SoM_bpfilter' + '_justpkhp' + '.png'
   if TRANSFER:
     som_file = modelsavename + 'SoM_bpfilter' + '_posttransfer' + '.png'
   else:
@@ -358,24 +364,13 @@ if SOMVIS:
   plt.savefig(som_file)
   plt.close()
 
-'''
-  blocklen = np.sqrt(np.product(meanhol_mut2.shape)).astype(int)
-  S = np.zeros((blocklen, blocklen))
-  i,j,k,l = meanhol_mut2.shape
-
-  for ii in range(i):
-      for jj in range(j):
-          for kk in range(k):
-              for ll in range(l):
-                  S[(4*ii)+kk, (4*jj)+ll] = meanhol_mut2[ii,jj,kk,ll]
-
-  plt.figure(figsize=(15,15))
-  plt.imshow(S,  cmap='Reds', vmin=None)
-  plt.colorbar()
-  plt.title('Blockvis of all mutations: %s %s %s'%(exp, modelarch, trial))
-
-  som_file = modelsavename + 'SoM_blockvis' + '.png'
-  som_file = os.path.join(img_folder, som_file)
-  plt.savefig(som_file)
-  plt.close()
-'''
+  if WRITE:
+      tran = 'notransfer'
+      if TRANSFER:
+          tran = 'transfer'
+      numpos = len(train['inputs'])//2
+      metricsline = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s'%(modelarch, datatype, trialnum, numepochs, tran,
+                        numpos, loss, mean_vals[0], mean_vals[1], mean_vals[2], totscore, ppv)
+      fd = open('test_metrics.csv', 'a')
+      fd.write(metricsline+'\n')
+      fd.close()
