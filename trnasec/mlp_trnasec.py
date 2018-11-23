@@ -249,8 +249,8 @@ if SOMCALC:
   arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
   Xdict = test['inputs'][plot_index[:num_summary]]
 
-  mean_mut2 = mf.som_average_ungapped(Xdict, ugidx, arrayspath, nntrainer, sess, progress='short',
-                                             save=True, layer='dense_1_bias')
+  mean_mut2 = mf.som_average_ungapped_split(Xdict, ugidx, arrayspath, nntrainer, sess, split=4, progress='short',
+                                             normalize='logodds', save=True, layer='dense_1_bias')
 
 if SOMVIS:
   #Load the saved data
@@ -282,7 +282,7 @@ if SOMVIS:
   sb.heatmap(C,vmin=None, cmap='Blues', linewidth=0.0)
   plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
 
-  som_file = modelsavename + 'SoM_bpfilter' + '.png'
+  som_file = modelsavename + 'SoM_bpfilter_logodds' + '.png'
   som_file = os.path.join(img_folder, som_file)
   plt.savefig(som_file)
   plt.close()

@@ -1,7 +1,7 @@
 import os
 from subprocess import call
 
-for iii in range(1):
+for iii in range(9):
     #The first and second number after the filename are the datatype and the trial number
     file = 'mlp_pkhp.py'
     data = '6'
@@ -9,7 +9,7 @@ for iii in range(1):
     call(['python', file, data, '1', '--justpkhp', '--test', '--somvis'])
     call(['python', file, data, '1.3', '--some', '20', '--justpkhp', '--test', '--somvis'])
     call(['python', file, data, '1.4', '--some', '50', '--justpkhp', '--test', '--somvis'])
-    call(['python', file, data, '1.5', '--some', '100', '--justpkhp', '--test',  '--somvis'])
+    call(['python', file, data, '1.5', '--some', '100', '--setepochs', '1000', '--justpkhp', '--test',  '--somvis'])
     call(['python', file, data, '1.6', '--some', '200', '--setepochs', '1000', '--justpkhp', '--test',  '--somvis'])
     call(['python', file, data, '1.7', '--some', '500', '--setepochs', '2000', '--justpkhp', '--test',  '--somvis'])
 

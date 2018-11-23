@@ -21,6 +21,7 @@ from deepomics import utils, fit, visualize, saliency
 #from Bio import AlignIO
 import time as time
 import pandas as pd
+
 #---------------------------------------------------------------------------------------------------------------------------------
 '''DEFINE ACTIONS'''
 TRAIN = False
@@ -145,6 +146,8 @@ valid = {'inputs': X_data[valididx],
          'targets': Y_data[valididx]}
 test = {'inputs': X_data[testidx],
          'targets': Y_data[testidx]}
+
+
 print ('Data extraction and dict construction completed in: ' + mf.sectotime(time.time() - starttime))
 #---------------------------------------------------------------------------------------------------------------------------------
 
@@ -330,11 +333,11 @@ if SOMVIS:
   #C = C/np.max(C)
   #get base pairing scores
   ugSS, numbp, numug, bpugSQ = htf.pkhp_SS()
-  if datatype == '6' and not TRANSFER:
+  if datatype == '6':# and not TRANSFER:
       ugSS = ugSS[1] #only extract the non-nested base pairs
-      numbp = 3
+      numbp = 6
   totscore = bd.bp_totscore(ugSS, C, numug)
-  ppv = bd.bp_ppv(C, ugSS, numbp, numug)
+  ppv = bd.bp_ppv(C, ugSS, numbp, numug, trans=True)
 
   plt.figure(figsize=(8,6))
   sb.heatmap(C,vmin=None, cmap='Blues', linewidth=0.0)
