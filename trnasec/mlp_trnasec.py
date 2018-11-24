@@ -112,6 +112,8 @@ numug = len(ugidx)
 
 #Get the bpug information
 bpugSQ, bpugidx = mf.bpug(ugidx, bpidx, SQ)
+print (numug, numbp, seqlen)
+
 #---------------------------------------------------------------------------------------------------------------------------------
 
 

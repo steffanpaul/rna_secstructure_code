@@ -26,7 +26,7 @@ TEST = False
 WRITE = False
 FOM = False
 SOMCALC = False
-SOMVIS = FalseX_data
+SOMVIS = False
 
 if '--train' in sys.argv:
   TRAIN = True
@@ -48,6 +48,8 @@ exp = 'rnasep'  #for the params folder
 
 
 img_folder = 'Images_mlp'
+if not os.path.isdir(img_folder):
+  os.mkdir(img_folder)
 #---------------------------------------------------------------------------------------------------------------------------------
 
 '''OPEN DATA'''
@@ -112,6 +114,7 @@ numug = len(ugidx)
 
 #Get the bpug information
 bpugSQ, bpugidx = mf.bpug(ugidx, bpidx, SQ)
+print (numug, numbp, seqlen)
 #---------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -122,8 +125,6 @@ modelarch = 'mlp'
 trial = 'rnasep_full'
 modelsavename = '%s_%s'%(modelarch, trial)
 
-print ('numug', numug, 'numbp', numbp)
-print (ugSS)
 
 
 
@@ -210,12 +211,14 @@ if TRAIN:
 '''TEST'''
 sess = utils.initialize_session()
 if TEST:
+  starttime = time.time()
 
   # set best parameters
   nntrainer.set_best_parameters(sess)
 
   # test model
   loss, mean_vals, std_vals = nntrainer.test_model(sess, test, name='test')
+  print (time.time() - starttime)
   if WRITE:
     metricsline = '%s,%s,%s,%s,%s,%s,%s'%(exp, modelarch, trial, loss, mean_vals[0], mean_vals[1], mean_vals[2])
     fd = open('test_metrics.csv', 'a')
@@ -254,7 +257,7 @@ if SOMCALC:
   arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
   Xdict = test['inputs'][plot_index[:num_summary]]
 
-  mean_mut2 = mf.som_average_ungapped(Xdict, ugidx, arrayspath, nntrainer, sess, progress='short',
+  mean_mut2 = mf.som_average_ungapped_split(Xdict, ugidx, arrayspath, nntrainer, sess, split=4, progress='on',
                                              save=True, layer='dense_1_bias')
 
 if SOMVIS:
@@ -283,9 +286,18 @@ if SOMVIS:
   C = C - np.mean(C)
   C = C/np.max(C)
 
-  plt.figure(figsize=(8,6))
-  sb.heatmap(C,vmin=None, cmap='Blues', linewidth=0.0)
+  plt.figure(figsize=(15,6))
+  plt.subplot(1,2,1)
+  sb.heatmap(C,xticklabels=ugSS, yticklabels=ugSS,vmin=0.2, cmap='hot', linewidth=0.0)
   plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
+  plt.xlabel('Ungapped nucleotides: pos 1')
+  plt.ylabel('Ungapped nucleotides: pos 2')
+  plt.subplot(1,2,2)
+  sb.heatmap(C[bpugidx][:, bpugidx], xticklabels=bpSS, yticklabels=bpSS, vmin=0., cmap='Blues', linewidth=0.0)
+  plt.title('Base Pair score for the base paired consensus regions given by infernal')
+  plt.xlabel('Base Paired nucleotides: pos 1')
+  plt.ylabel('Base Paired nucleotides: pos 2')
+
 
   som_file = modelsavename + 'SoM_bpfilter' + '.png'
   som_file = os.path.join(img_folder, som_file)
