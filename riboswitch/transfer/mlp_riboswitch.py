@@ -229,7 +229,7 @@ if FOM:
   fig = plt.figure(figsize=(15,plots*2+1))
   for ii in num_plots:
 
-      X = np.expand_dims(test['inputs'][plot_index[10000+ii]], axis=0)
+      X = np.expand_dims(test['inputs'][plot_index[ii]], axis=0)
 
       ax = fig.add_subplot(plots, 1, ii+1)
       mf.fom_saliency_mul(X, layer='dense_1_bias', alphabet='rna', nntrainer=nntrainer, sess=sess, ax =ax)
@@ -243,7 +243,7 @@ if FOM:
 
 '''Som calc'''
 if SOMCALC:
-  num_summary = 50
+  num_summary = np.min([500,len(test['inputs'])//2])
 
   arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
   Xdict = test['inputs'][plot_index[:num_summary]]
@@ -253,7 +253,7 @@ if SOMCALC:
 
 if SOMVIS:
   #Load the saved data
-  num_summary = 50
+  num_summary = np.min([500,len(test['inputs'])//2])
   arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
   mean_mut2 = np.load(arrayspath)
 

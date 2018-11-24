@@ -574,12 +574,12 @@ if SOMVIS:
     #C = C - np.mean(C)
     #C = C/np.max(C)
     ugSS, numbp, numug, bpugSQ = htf.pkhp_SS()
-    if datatype == '6' and not TRANSFER:
+    if datatype == '6':# and not TRANSFER:
       ugSS = ugSS[1] #only extract the non-nested base pairs
       numbp = 3
     #get base pairing scores
     totscore = bd.bp_totscore(ugSS, C, numug)
-    ppv = bd.bp_ppv(C, ugSS, numbp, numug)
+    ppv = bd.bp_ppv(C, ugSS, numbp, numug, trans=True)
 
     color = 'Oranges'
 

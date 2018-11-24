@@ -26,7 +26,7 @@ import pandas as pd
 '''DEFINE ACTIONS'''
 TRAIN = False
 TEST = False
-WRITE = True
+WRITE = False
 FOM = False
 SOMCALC = False
 SOMVIS = False
@@ -163,6 +163,9 @@ if PRETRANSFER:
   trial = 'pkhp_d%s_pretran'%(datatype)
   numepochs = 40
 
+if PRETRANSFER and '--setepochs' in sys.argv:
+  trial = 'pkhp_d%se%s_pretran'%(datatype, numepochs)
+  numepochs = int(sys.argv[sys.argv.index('--setepochs')+1])
 
 modelsavename = '%s_%s'%(modelarch, trial)
 

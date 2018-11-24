@@ -286,17 +286,17 @@ if SOMVIS:
   C = C - np.mean(C)
   C = C/np.max(C)
 
-  plt.figure(figsize=(15,6))
-  plt.subplot(1,2,1)
-  sb.heatmap(C,xticklabels=ugSS, yticklabels=ugSS,vmin=0.2, cmap='hot', linewidth=0.0)
+  plt.figure(figsize=(25,20))
+  #plt.subplot(1,2,1)
+  sb.heatmap(C,xticklabels=ugSS, yticklabels=ugSS,vmin=0., cmap='hot', linewidth=0.0)
   plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
   plt.xlabel('Ungapped nucleotides: pos 1')
   plt.ylabel('Ungapped nucleotides: pos 2')
-  plt.subplot(1,2,2)
-  sb.heatmap(C[bpugidx][:, bpugidx], xticklabels=bpSS, yticklabels=bpSS, vmin=0., cmap='Blues', linewidth=0.0)
-  plt.title('Base Pair score for the base paired consensus regions given by infernal')
-  plt.xlabel('Base Paired nucleotides: pos 1')
-  plt.ylabel('Base Paired nucleotides: pos 2')
+  #plt.subplot(1,2,2)
+  #sb.heatmap(C[bpugidx][:, bpugidx], xticklabels=bpSS, yticklabels=bpSS, vmin=0., cmap='Blues', linewidth=0.0)
+  #plt.title('Base Pair score for the base paired consensus regions given by infernal')
+  #plt.xlabel('Base Paired nucleotides: pos 1')
+  #plt.ylabel('Base Paired nucleotides: pos 2')
 
 
   som_file = modelsavename + 'SoM_bpfilter' + '.png'
