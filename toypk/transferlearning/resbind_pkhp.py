@@ -86,7 +86,7 @@ starttime = time.time()
 
 #Open data from h5py
 exp_data = 'data_toypk'
-filename = 'toypkhp_50_d%s.hdf5'%(datatype)
+filename = 'toypkhp_50_d%s.hdf5'%('6')#CHANGE!!
 data_path = os.path.join('../../..', exp_data, filename)
 
 if TRANSFER: #import pkhp data to transfer learn
@@ -165,8 +165,8 @@ if PRETRANSFER:
   numepochs = 100
 
 if PRETRANSFER and '--setepochs' in sys.argv:
-  trial = 'pkhp_d%se%s_pretran'%(datatype, numepochs)
   numepochs = int(sys.argv[sys.argv.index('--setepochs')+1])
+  trial = 'pkhp_d%s_pretran'%(datatype)
 
 
 modelsavename = '%s_%s'%(modelarch, trial)
@@ -379,6 +379,6 @@ if SOMVIS:
       numpos = len(train['inputs'])//2
       metricsline = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s'%(modelarch, datatype, trialnum, numepochs, tran,
                         numpos, loss, mean_vals[0], mean_vals[1], mean_vals[2], totscore, ppv)
-      fd = open('test_metrics.csv', 'a')
+      fd = open('ftr_test_metrics.csv', 'a')
       fd.write(metricsline+'\n')
       fd.close()
