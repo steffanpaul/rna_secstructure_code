@@ -252,7 +252,7 @@ if SOMCALC:
   Xdict = test['inputs'][plot_index[:num_summary]]
 
   mean_mut2 = mf.som_average_ungapped_split(Xdict, ugidx, arrayspath, nntrainer, sess, split=4, progress='short',
-                                             normalize='logodds', save=True, layer='dense_1_bias')
+                                             normalize=False, save=True, layer='dense_1_bias')
 
 if SOMVIS:
   #Load the saved data
@@ -281,7 +281,7 @@ if SOMVIS:
   C = C/np.max(C)
 
   plt.figure(figsize=(8,6))
-  sb.heatmap(C,vmin=None, cmap='Blues', linewidth=0.0)
+  sb.heatmap(C,xticklabels=ugSS, yticklabels=ugSS,vmin=None, cmap='Blues', linewidth=0.0)
   plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
 
   som_file = modelsavename + 'SoM_bpfilter_logodds' + '.png'

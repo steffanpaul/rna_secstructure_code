@@ -24,7 +24,7 @@ import pandas as pd
 #---------------------------------------------------------------------------------------------------------------------------------
 '''DEFINE ACTIONS'''
 TRAIN = False
-WRITE = False
+WRITE = True
 FOM = False
 SOMCALC = False
 SOMVIS = False
@@ -605,7 +605,7 @@ if SOMVIS:
       numpos = len(X_train)//2
       metricsline = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s'%(modelarch, datatype, trialnum, numepochs, tran,
                         numpos, loss, mean_vals[0], mean_vals[1], mean_vals[2], totscore, ppv)
-      fd = open('test_metrics.csv', 'a')
+      fd = open('rnn_test_metrics.csv', 'a')
       fd.write(metricsline+'\n')
       fd.close()
 
