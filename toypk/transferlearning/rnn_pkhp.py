@@ -157,6 +157,10 @@ if PRETRANSFER:
   trial = 'pkhp_d%s_pretran'%(datatype)
   numepochs = 5
 
+if PRETRANSFER and '--setepochs' in sys.argv:
+    numepochs = int(sys.argv[sys.argv.index('--setepochs')+1])
+    trial = 'pkhp_d%s_pretran'%(datatype)
+
 
 modelsavename = '%s_%s'%(modelarch, trial)
 
@@ -303,7 +307,7 @@ if TRAIN:
 
   #numepochs = called up above
   bar_length = 25
-  patience = numepochs
+  patience = 200
 
   wait=0
   min_loss = 1e10
@@ -458,12 +462,6 @@ print("  test AUROC = "+str(np.nanmean(auc_roc)))
 print("  test AUPRC = "+str(np.nanmean(auc_pr)))
 
 
-if WRITE:
-    metricsline = '%s,%s,%s,%s,%s,%s,%s'%(exp, modelarch, trial, loss, mean_vals[0], mean_vals[1], mean_vals[2])
-    fd = open('test_metrics.csv', 'a')
-    fd.write(metricsline+'\n')
-    fd.close()
-
 
 '''SORT ACTIVATIONS'''
 WT_predictions = valid_predictions[np.argsort(sort_index)]
@@ -604,8 +602,8 @@ if SOMVIS:
           tran = 'transfer'
       numpos = len(X_train)//2
       metricsline = '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s'%(modelarch, datatype, trialnum, numepochs, tran,
-                        numpos, loss, mean_vals[0], mean_vals[1], mean_vals[2], totscore, ppv)
-      fd = open('rnn_test_metrics.csv', 'a')
+                        numpos, loss/num_batches, mean_vals[0], mean_vals[1], mean_vals[2], totscore, ppv)
+      fd = open('test_metrics.csv', 'a')
       fd.write(metricsline+'\n')
       fd.close()
 

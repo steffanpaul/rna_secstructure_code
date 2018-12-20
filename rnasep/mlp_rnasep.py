@@ -299,7 +299,7 @@ if SOMVIS:
   #plt.ylabel('Base Paired nucleotides: pos 2')
 
 
-  som_file = modelsavename + 'SoM_bpfilter' + '.png'
+  som_file = modelsavename + 'SoM_bpfilter' + '.pdf'
   som_file = os.path.join(img_folder, som_file)
-  plt.savefig(som_file)
+  plt.savefig(som_file, format='pdf')
   plt.close()

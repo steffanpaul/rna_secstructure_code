@@ -47,7 +47,7 @@ if '--somvis' in sys.argv:
 exp = 'riboswitch'  #for the params folder
 
 
-img_folder = 'Images_mlp'
+
 #---------------------------------------------------------------------------------------------------------------------------------
 
 '''OPEN DATA'''
@@ -118,10 +118,14 @@ bpugSQ, bpugidx = mf.bpug(ugidx, bpidx, SQ)
 '''SAVE PATHS AND PARAMETERS'''
 params_results = '../../../results'
 
-modelarch = 'mlp'
+numhidden = int(sys.argv[1])
+modelarch = 'mlp_%s'%(str(numhidden))
 trial = 'riboswitch_full'
 modelsavename = '%s_%s'%(modelarch, trial)
 
+img_folder = 'Images_%s'%(modelarch)
+if not os.path.isdir(img_folder):
+    os.mkdir(img_folder)
 
 
 '''BUILD NEURAL NETWORK'''
@@ -136,7 +140,7 @@ def cnn_model(input_shape, output_shape):
 
   layer2 = {'layer': 'dense',        # input, conv1d, dense, conv1d_residual, dense_residual, conv1d_transpose,
                                       # concat, embedding, variational_normal, variational_softmax, + more
-            'num_units': 44,
+            'num_units': numhidden,
             'norm': 'batch',          # if removed, automatically adds bias instead
             'activation': 'relu',     # or leaky_relu, prelu, sigmoid, tanh, etc
             'dropout': 0.5,           # if removed, default is no dropout
@@ -193,7 +197,7 @@ if TRAIN:
   fit.train_minibatch(sess, nntrainer, data,
                     batch_size=1000,
                     num_epochs=1000,
-                    patience=100,
+                    patience=1000,
                     verbose=2,
                     shuffle=True,
                     save_all=False)

@@ -86,7 +86,7 @@ starttime = time.time()
 
 #Open data from h5py
 exp_data = 'data_toypk'
-filename = 'toypkhp_50_d%s.hdf5'%('6')#CHANGE!!
+filename = 'toypkhp_50_d%s.hdf5'%(datatype)
 data_path = os.path.join('../../..', exp_data, filename)
 
 if TRANSFER: #import pkhp data to transfer learn
