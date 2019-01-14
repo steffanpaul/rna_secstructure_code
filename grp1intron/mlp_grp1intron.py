@@ -47,9 +47,6 @@ if '--somvis' in sys.argv:
 exp = 'grp1intron'  #for the params folder
 
 
-img_folder = 'Images_mlp'
-if not os.path.isdir(img_folder):
-    os.mkdir(img_folder)
 #---------------------------------------------------------------------------------------------------------------------------------
 
 '''OPEN DATA'''
@@ -122,11 +119,14 @@ print (numug, numbp, seqlen)
 '''SAVE PATHS AND PARAMETERS'''
 params_results = '../../results'
 
-modelarch = 'mlp'
+numhidden = int(sys.argv[1])
+modelarch = 'mlp_%s'%(str(numhidden))
 trial = 'grp1intron_full'
 modelsavename = '%s_%s'%(modelarch, trial)
 
-
+img_folder = 'Images_%s'%(modelarch)
+if not os.path.isdir(img_folder):
+    os.mkdir(img_folder)
 
 '''BUILD NEURAL NETWORK'''
 
@@ -140,7 +140,7 @@ def cnn_model(input_shape, output_shape):
 
   layer2 = {'layer': 'dense',        # input, conv1d, dense, conv1d_residual, dense_residual, conv1d_transpose,
                                       # concat, embedding, variational_normal, variational_softmax, + more
-            'num_units': 128,
+            'num_units': numhidden,
             'norm': 'batch',          # if removed, automatically adds bias instead
             'activation': 'relu',     # or leaky_relu, prelu, sigmoid, tanh, etc
             'dropout': 0.5,           # if removed, default is no dropout
@@ -197,9 +197,9 @@ if TRAIN:
 
   data = {'train': train, 'valid': valid}
   fit.train_minibatch(sess, nntrainer, data,
-                    batch_size=100,
-                    num_epochs=1000,
-                    patience=300,
+                    batch_size=128,
+                    num_epochs=2000,
+                    patience=1000,
                     verbose=2,
                     shuffle=True,
                     save_all=False)
@@ -252,7 +252,7 @@ if SOMCALC:
   num_summary = np.min([500,len(test['inputs'])//2])
   print (num_summary)
 
-  arrayspath = 'Arrays/%s_%s%s_so%.0fk_log.npy'%(exp, modelarch, trial, num_summary/1000)
+  arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
   Xdict = test['inputs'][plot_index[:num_summary]]
 
   mean_mut2 = mf.som_average_ungapped_split(Xdict, ugidx, arrayspath, nntrainer, sess, split=4, progress='short',
@@ -261,7 +261,7 @@ if SOMCALC:
 if SOMVIS:
   #Load the saved data
   num_summary = np.min([500,len(test['inputs'])//2])
-  arrayspath = 'Arrays/%s_%s%s_so%.0fk_log.npy'%(exp, modelarch, trial, num_summary/1000)
+  arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
   mean_mut2 = np.load(arrayspath)
 
 
@@ -285,11 +285,11 @@ if SOMVIS:
   C = C - np.mean(C)
   C = C/np.max(C)
 
-  plt.figure(figsize=(8,6))
-  sb.heatmap(C,xticklabels=ugSS, yticklabels=ugSS,vmin=None, cmap='Blues', linewidth=0.0)
+  plt.figure(figsize=(25,20))
+  sb.heatmap(C,xticklabels=ugSS, yticklabels=ugSS,vmin=0.2, cmap='hot', linewidth=0.0)
   plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
 
-  som_file = modelsavename + 'SoM_bpfilter_logodds_real' + '.png'
+  som_file = modelsavename + 'SoM_bpfilter' + '.png'
   som_file = os.path.join(img_folder, som_file)
   plt.savefig(som_file)
   plt.close()

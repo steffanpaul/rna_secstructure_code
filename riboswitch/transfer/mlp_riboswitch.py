@@ -46,8 +46,6 @@ if '--somvis' in sys.argv:
 
 exp = 'riboswitch'  #for the params folder
 
-
-
 #---------------------------------------------------------------------------------------------------------------------------------
 
 '''OPEN DATA'''
@@ -55,7 +53,7 @@ exp = 'riboswitch'  #for the params folder
 starttime = time.time()
 
 #Open data from h5py
-filename = 'riboswitch_full.hdf5'
+filename = 'riboswitch_sim2k.hdf5'
 with h5py.File(filename, 'r') as dataset:
     X_data = np.array(dataset['X_data'])
     Y_data = np.array(dataset['Y_data'])
@@ -75,13 +73,15 @@ test_frac = 1-0.8-valid_frac
 N = numdata
 posidx = np.random.permutation(np.arange(N//2))
 negidx = np.random.permutation(np.arange(N//2, N))
-split_1 = int((N//2)*(1-valid_frac-test_frac))
-split_2 = int((N//2)*(1-test_frac))
+
+cut = 1584
+split_1 = int((cut//2)*(1-valid_frac-test_frac))
+split_2 = int((cut//2)*(1-test_frac))
 #shuffle = np.random.permutation(N)
 
 trainidx = np.random.permutation(np.concatenate([posidx[:split_1], negidx[:split_1]]))
 valididx = np.random.permutation(np.concatenate([posidx[split_1:split_2], negidx[split_1:split_2]]))
-testidx = np.random.permutation(np.concatenate([posidx[split_2:], negidx[split_2:]]))
+testidx = np.random.permutation(np.concatenate([posidx[split_2:cut//2], negidx[split_2:cut//2]]))
 
 #set up dictionaries
 train = {'inputs': X_data[trainidx],
@@ -93,7 +93,7 @@ test = {'inputs': X_data[testidx],
 
 print ('Data extraction and dict construction completed in: ' + mf.sectotime(time.time() - starttime))
 
-simalign_file = 'riboswitch_full.sto'
+simalign_file = 'riboswitch_sim2k.sto'
 #Get the full secondary structure and sequence consensus from the emission
 SS = mf.getSSconsensus(simalign_file)
 SQ = mf.getSQconsensus(simalign_file)
@@ -120,7 +120,7 @@ params_results = '../../../results'
 
 numhidden = int(sys.argv[1])
 modelarch = 'mlp_%s'%(str(numhidden))
-trial = 'riboswitch_full'
+trial = 'riboswitch_sim2k_cut'
 modelsavename = '%s_%s'%(modelarch, trial)
 
 img_folder = 'Images_%s'%(modelarch)

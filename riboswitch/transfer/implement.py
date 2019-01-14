@@ -1,8 +1,14 @@
 import os
 from subprocess import call
 
-for numhidden in ['22', '30', '88', '128']:
-    call(['python', 'mlp_riboswitch.py', numhidden, '--train', '--test', '--somvis', '--somcalc'])
+hiddenlist = ['128', '512']
 
-for numhidden in ['22', '30', '88', '128']:
-    call(['python', 'mlp_riboswitch.py', numhidden, '--test'])
+for numhidden in hiddenlist:
+    #call(['python', 'mlp_riboswitch_full.py', numhidden, '--train', '--test', '--somvis', '--somcalc'])
+    call(['python', 'mlp_riboswitch_sim2k.py', numhidden, '--train', '--test', '--somvis', '--somcalc'])
+    #call(['python', 'mlp_riboswitch_sim2k_cut.py', numhidden, '--train', '--test', '--somvis', '--somcalc'])
+
+for numhidden in hiddenlist:
+    call(['python', 'mlp_riboswitch_full.py', numhidden, '--test'])
+    call(['python', 'mlp_riboswitch_sim2k.py', numhidden, '--test'])
+    call(['python', 'mlp_riboswitch_sim2k_cut.py', numhidden, '--test'])
