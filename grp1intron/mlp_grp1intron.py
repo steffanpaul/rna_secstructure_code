@@ -256,7 +256,7 @@ if SOMCALC:
   Xdict = test['inputs'][plot_index[:num_summary]]
 
   mean_mut2 = mf.som_average_ungapped_split(Xdict, ugidx, arrayspath, nntrainer, sess, split=4, progress='short',
-                                             normalize='logodds', save=True, layer='dense_1_bias')
+                                             normalize=False, save=True, layer='dense_1_bias')
 
 if SOMVIS:
   #Load the saved data
