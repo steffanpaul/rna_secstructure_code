@@ -12,6 +12,7 @@ import scipy
 import sys
 sys.path.append('../../../..')
 import mutagenesisfunctions as mf
+import bpdev as bd
 import helper
 from deepomics import neuralnetwork as nn
 from deepomics import utils, fit, visualize, saliency
@@ -41,6 +42,13 @@ if '--somcalc' in sys.argv:
 if '--somvis' in sys.argv:
   SOMVIS = True
 
+if '--mode' in sys.argv: #identifies which data/mode we are running (full, sim2k, sim2k_cut)
+    modename = sys.argv[sys.argv.index('--mode')+1]
+    if 'sim2k' in modename:
+        modefile = 'sim2k'
+    else:
+        modefile = 'full'
+
 #---------------------------------------------------------------------------------------------------------------------------------
 '''DEFINE LOOP'''
 
@@ -53,7 +61,7 @@ exp = 'riboswitch'  #for the params folder
 starttime = time.time()
 
 #Open data from h5py
-filename = 'riboswitch_sim2k.hdf5'
+filename = 'riboswitch_%s.hdf5'%(modefile)
 with h5py.File(filename, 'r') as dataset:
     X_data = np.array(dataset['X_data'])
     Y_data = np.array(dataset['Y_data'])
@@ -74,7 +82,10 @@ N = numdata
 posidx = np.random.permutation(np.arange(N//2))
 negidx = np.random.permutation(np.arange(N//2, N))
 
-cut = 1584
+if modename == 'sim2k_cut':
+    cut = 1584
+else:
+    cut = N
 split_1 = int((cut//2)*(1-valid_frac-test_frac))
 split_2 = int((cut//2)*(1-test_frac))
 #shuffle = np.random.permutation(N)
@@ -93,7 +104,7 @@ test = {'inputs': X_data[testidx],
 
 print ('Data extraction and dict construction completed in: ' + mf.sectotime(time.time() - starttime))
 
-simalign_file = 'riboswitch_sim2k.sto'
+simalign_file = 'riboswitch_%s.sto'%(modefile)
 #Get the full secondary structure and sequence consensus from the emission
 SS = mf.getSSconsensus(simalign_file)
 SQ = mf.getSQconsensus(simalign_file)
@@ -120,7 +131,7 @@ params_results = '../../../results'
 
 numhidden = int(sys.argv[1])
 modelarch = 'mlp_%s'%(str(numhidden))
-trial = 'riboswitch_sim2k_cut'
+trial = 'riboswitch_%s'%(modename)
 modelsavename = '%s_%s'%(modelarch, trial)
 
 img_folder = 'Images_%s'%(modelarch)
@@ -195,8 +206,8 @@ if TRAIN:
 
   data = {'train': train, 'valid': valid}
   fit.train_minibatch(sess, nntrainer, data,
-                    batch_size=1000,
-                    num_epochs=1000,
+                    batch_size=128,
+                    num_epochs=2000,
                     patience=1000,
                     verbose=2,
                     shuffle=True,
@@ -259,30 +270,21 @@ if SOMVIS:
   #Load the saved data
   num_summary = np.min([500,len(test['inputs'])//2])
   arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
-  mean_mut2 = np.load(arrayspath)
 
-  #Reshape into a holistic tensor organizing the mutations into 4*4
-  meanhol_mut2 = mean_mut2.reshape(numug,numug,4,4)
+  denoise = 'norm'
+  vmin = None
+  if '--apc' in sys.argv:
+      denoise = 'APC'
+      vmin = None
+      modelsavename = modelsavename + 'APC'
+  C = bd.get_wc(arrayspath, numug, dims, bpugSQ, denoise=denoise)
 
-  #Normalize
-  normalize = True
-  if normalize:
-      norm_meanhol_mut2 = mf.normalize_mut_hol(meanhol_mut2, nntrainer, sess, normfactor=1)
-
-  #Let's try something weird
-  bpfilter = np.ones((4,4))*0.
-  for i,j in zip(range(4), range(4)):
-      bpfilter[i, -(j+1)] = +1.
-
-  nofilter = np.ones((4,4))
-
-  C = (norm_meanhol_mut2*bpfilter)
-  C = np.sum((C).reshape(numug,numug,dims*dims), axis=2)
-  C = C - np.mean(C)
-  C = C/np.max(C)
+  if '--apc' not in sys.argv:
+      C = C - np.mean(C)
+      C = C/np.max(C)
 
   plt.figure(figsize=(8,6))
-  sb.heatmap(C,vmin=None, cmap='Blues', linewidth=0.0)
+  sb.heatmap(C,xticklabels=ugSS, yticklabels=ugSS,vmin=vmin, vmax=None, cmap='Blues', linewidth=0.0)
   plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
 
   som_file = modelsavename + 'SoM_bpfilter' + '.png'

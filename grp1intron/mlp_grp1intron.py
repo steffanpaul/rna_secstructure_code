@@ -12,6 +12,7 @@ import scipy
 import sys
 sys.path.append('../../..')
 import mutagenesisfunctions as mf
+import bpdev as bd
 import helper
 from deepomics import neuralnetwork as nn
 from deepomics import utils, fit, visualize, saliency
@@ -124,7 +125,7 @@ modelarch = 'mlp_%s'%(str(numhidden))
 trial = 'grp1intron_full'
 modelsavename = '%s_%s'%(modelarch, trial)
 
-img_folder = 'Images_%s'%(modelarch)
+img_folder = 'Images_mlp'#%s'%(modelarch) CHANGE
 if not os.path.isdir(img_folder):
     os.mkdir(img_folder)
 
@@ -217,11 +218,7 @@ if TEST:
 
   # test model
   loss, mean_vals, std_vals = nntrainer.test_model(sess, test, name='test')
-  if WRITE:
-    metricsline = '%s,%s,%s,%s,%s,%s,%s'%(exp, modelarch, trial, loss, mean_vals[0], mean_vals[1], mean_vals[2])
-    fd = open('test_metrics.csv', 'a')
-    fd.write(metricsline+'\n')
-    fd.close()
+
 '''SORT ACTIVATIONS'''
 nntrainer.set_best_parameters(sess)
 predictionsoutput = nntrainer.get_activations(sess, test, layer='output')
@@ -262,34 +259,38 @@ if SOMVIS:
   #Load the saved data
   num_summary = np.min([500,len(test['inputs'])//2])
   arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
-  mean_mut2 = np.load(arrayspath)
 
+  denoise = 'norm'
+  vmin = 0.
+  if '--apc' in sys.argv:
+      denoise = 'APC'
+      vmin = 0.
+      modelsavename = modelsavename + 'APC'
+  C = bd.get_wc(arrayspath, numug, dims, bpugSQ, denoise=denoise)
 
-  #Reshape into a holistic tensor organizing the mutations into 4*4
-  meanhol_mut2 = mean_mut2.reshape(numug,numug,4,4)
-
-  #Normalize
-  normalize = True
-  if normalize:
-      norm_meanhol_mut2 = mf.normalize_mut_hol(meanhol_mut2, nntrainer, sess, normfactor=1)
-
-  #Let's try something weird
-  bpfilter = np.ones((4,4))*0.
-  for i,j in zip(range(4), range(4)):
-      bpfilter[i, -(j+1)] = +1.
-
-  nofilter = np.ones((4,4))
-
-  C = (norm_meanhol_mut2*bpfilter)
-  C = np.sum((C).reshape(numug,numug,dims*dims), axis=2)
-  C = C - np.mean(C)
-  C = C/np.max(C)
+  if '--apc' not in sys.argv:
+      C = C - np.mean(C)
+      C = C/np.max(C)
 
   plt.figure(figsize=(25,20))
-  sb.heatmap(C,xticklabels=ugSS, yticklabels=ugSS,vmin=0.2, cmap='hot', linewidth=0.0)
+  sb.heatmap(C,xticklabels=ugSS, yticklabels=ugSS,vmin=vmin, vmax=None, cmap='viridis', linewidth=0.0)
   plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
 
   som_file = modelsavename + 'SoM_bpfilter' + '.png'
   som_file = os.path.join(img_folder, som_file)
   plt.savefig(som_file)
   plt.close()
+
+if WRITE:
+    import datetime
+    date = datetime.datetime.today().strftime('%Y-%m-%d')
+    if not os.path.isfile('test_metrics.csv'):
+        fd = open('test_metrics.csv', 'a')
+        fd.write('Date,Model Architecture,Hidden Layer Size,Trial,Numpos,Loss,Accuracy,AUC-roc,AUC-pr\n')
+        fd.close()
+    numpos = len(train['inputs'])//2
+    metricsline = '%s,%s,%s,%s,%s,%s,%s,%s,%s'%(date, modelarch, numhidden, trial, numpos,
+                 loss, mean_vals[0], mean_vals[1], mean_vals[2])
+    fd = open('test_metrics.csv', 'a')
+    fd.write(metricsline+'\n')
+    fd.close()

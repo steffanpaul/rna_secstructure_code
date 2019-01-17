@@ -1,10 +1,10 @@
 import os
 from subprocess import call
 
-hiddenlist = ['44', '128', '512', '1024']
+hiddenlist = ['512', '1024','44', '128']
 
 for numhidden in hiddenlist:
-    call(['python', 'mlp_grp1intron.py', numhidden, '--train', '--test', '--somvis', '--somcalc'])
-
-for numhidden in hiddenlist:
-    call(['python', 'mlp_grp1intron.py', numhidden, '--test'])
+    call(['python', 'mlp_grp1intron.py', numhidden, '--somvis'])
+    #call(['python', 'mlp_grp1intron.py', numhidden, '--somvis', '--apc'])
+#for numhidden in hiddenlist:
+#    call(['python', 'mlp_grp1intron.py', numhidden, '--test'])

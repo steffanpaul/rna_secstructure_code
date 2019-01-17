@@ -13,6 +13,7 @@ import sys
 sys.path.append('../../..')
 import mutagenesisfunctions as mf
 import helper
+import bpdev as bd
 from deepomics import neuralnetwork as nn
 from deepomics import utils, fit, visualize, saliency
 
@@ -264,42 +265,24 @@ if SOMVIS:
   #Load the saved data
   num_summary = np.min([500,len(test['inputs'])//2])
   arrayspath = 'Arrays/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
-  mean_mut2 = np.load(arrayspath)
 
-  #Reshape into a holistic tensor organizing the mutations into 4*4
-  meanhol_mut2 = mean_mut2.reshape(numug,numug,4,4)
+  denoise = 'norm'
+  vmin = 0.
+  if '--apc' in sys.argv:
+      denoise = 'APC'
+      vmin = 0.
+      modelsavename = modelsavename + 'APC'
+  C = bd.get_wc(arrayspath, numug, dims, bpugSQ, denoise=denoise)
 
-  #Normalize
-  normalize = True
-  if normalize:
-      norm_meanhol_mut2 = mf.normalize_mut_hol(meanhol_mut2, nntrainer, sess, normfactor=1)
-
-  #Let's try something weird
-  bpfilter = np.ones((4,4))*0.
-  for i,j in zip(range(4), range(4)):
-      bpfilter[i, -(j+1)] = +1.
-
-  nofilter = np.ones((4,4))
-
-  C = (norm_meanhol_mut2*bpfilter)
-  C = np.sum((C).reshape(numug,numug,dims*dims), axis=2)
-  C = C - np.mean(C)
-  C = C/np.max(C)
+  if '--apc' not in sys.argv:
+      C = C - np.mean(C)
+      C = C/np.max(C)
 
   plt.figure(figsize=(25,20))
-  #plt.subplot(1,2,1)
-  sb.heatmap(C,xticklabels=ugSS, yticklabels=ugSS,vmin=0., cmap='hot', linewidth=0.0)
+  sb.heatmap(C,xticklabels=ugSS, yticklabels=ugSS,vmin=vmin, vmax=None, cmap='hot', linewidth=0.0)
   plt.title('Base Pair scores: %s %s %s'%(exp, modelarch, trial))
-  plt.xlabel('Ungapped nucleotides: pos 1')
-  plt.ylabel('Ungapped nucleotides: pos 2')
-  #plt.subplot(1,2,2)
-  #sb.heatmap(C[bpugidx][:, bpugidx], xticklabels=bpSS, yticklabels=bpSS, vmin=0., cmap='Blues', linewidth=0.0)
-  #plt.title('Base Pair score for the base paired consensus regions given by infernal')
-  #plt.xlabel('Base Paired nucleotides: pos 1')
-  #plt.ylabel('Base Paired nucleotides: pos 2')
 
-
-  som_file = modelsavename + 'SoM_bpfilter' + '.pdf'
+  som_file = modelsavename + 'SoM_bpfilter' + '.png'
   som_file = os.path.join(img_folder, som_file)
-  plt.savefig(som_file, format='pdf')
+  plt.savefig(som_file)
   plt.close()
