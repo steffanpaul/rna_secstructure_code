@@ -1,0 +1,6 @@
+01/18/2019
+
+Wrote and ran 'char_count.py'. This file goes through all the alignments in zwein and counts
+which characters are used to make sure it doesn't mess with mf code.
+Counter results are: Counter({'-': 913414, 'A': 144346, 'G': 136065, 'U': 119366, 'C': 117057, 'N': 9, 'K': 1, 'M': 1, 'R': 1})
+So characters not in mf are negligible and can be ignored.
