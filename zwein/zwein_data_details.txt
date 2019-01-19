@@ -1,0 +1,144 @@
+Family Name               chrB-a
+Source                    Z. Weinberg
+Alignment depth           172
+Alignment length          125
+Mean seq length           80.9825581395
+Min seq length            73
+Max seq length            110
+Std seq length            4.33143436848
+Profile emission time     0.37s
+
+....<<<<<<..._.._____.>.>>>>>...........................<<<<<<...............................................>>>>>>..........
+ 
+Family Name               C4
+Source                    Z. Weinberg
+Alignment depth           496
+Alignment length          136
+Mean seq length           87.3024193548
+Min seq length            80
+Max seq length            96
+Std seq length            2.63147706927
+Profile emission time     1.17s
+
+:::::((.(((.(.(.((..((((..((.((.<<<<<<<.____...>>>>>>>.<<<<<_...__________.........._>>>>>,.,,,,.,.,))))..)))...)....))..)).).)).)):::::
+ 
+Family Name               int-alpA
+Source                    Z. Weinberg
+Alignment depth           277
+Alignment length          118
+Mean seq length           69.6245487365
+Min seq length            64
+Max seq length            93
+Std seq length            3.81662384525
+Profile emission time     0.56s
+
+((((((((.,,<<<<<<<<____.....>>>>>>>>,,,,..<<<<<<<..___AAAAAAAAAAAAAA..>>>>>>>...)))).))))----...........aaaaaaaaaaaaaa
+ 
+Family Name               LOOT
+Source                    Z. Weinberg
+Alignment depth           422
+Alignment length          203
+Mean seq length           121.433649289
+Min seq length            107
+Max seq length            147
+Std seq length            6.01885705406
+Profile emission time     1.45s
+
+<<<<.----.<<<<<<<<<<<<<<<...........>>>>>>>>>>>>>>>---..>>>>....,...,..,<<<<<<<<<<<<<<<<<<<<<<<<<<.......................>>>>>>>>>>>>>>>>>>>>>>>>>>.,<<<<<.<<<<____.>>>>>>>>.>.<<<<<<<<<<........>>>>>>>>>>
+ 
+Family Name               chrB-a
+Source                    Z. Weinberg
+Alignment depth           172
+Alignment length          125
+Mean seq length           80.9825581395
+Min seq length            73
+Max seq length            110
+Std seq length            4.33143436848
+Profile emission time     0.37s
+
+....<<<<<<..._.._____.>.>>>>>...........................<<<<<<...............................................>>>>>>..........
+ 
+Family Name               C4
+Source                    Z. Weinberg
+Alignment depth           496
+Alignment length          136
+Mean seq length           87.3024193548
+Min seq length            80
+Max seq length            96
+Std seq length            2.63147706927
+Profile emission time     1.16s
+
+:::::((.(((.(.(.((..((((..((.((.<<<<<<<.____...>>>>>>>.<<<<<_...__________.........._>>>>>,.,,,,.,.,))))..)))...)....))..)).).)).)):::::
+ 
+Family Name               int-alpA
+Source                    Z. Weinberg
+Alignment depth           277
+Alignment length          118
+Mean seq length           69.6245487365
+Min seq length            64
+Max seq length            93
+Std seq length            3.81662384525
+Profile emission time     0.56s
+
+((((((((.,,<<<<<<<<____.....>>>>>>>>,,,,..<<<<<<<..___AAAAAAAAAAAAAA..>>>>>>>...)))).))))----...........aaaaaaaaaaaaaa
+ 
+Family Name               LOOT
+Source                    Z. Weinberg
+Alignment depth           422
+Alignment length          203
+Mean seq length           121.433649289
+Min seq length            107
+Max seq length            147
+Std seq length            6.01885705406
+Profile emission time     1.46s
+
+<<<<.----.<<<<<<<<<<<<<<<...........>>>>>>>>>>>>>>>---..>>>>....,...,..,<<<<<<<<<<<<<<<<<<<<<<<<<<.......................>>>>>>>>>>>>>>>>>>>>>>>>>>.,<<<<<.<<<<____.>>>>>>>>.>.<<<<<<<<<<........>>>>>>>>>>
+ 
+Family Name               manA
+Source                    Z. Weinberg
+Alignment depth           193
+Alignment length          350
+Mean seq length           191.917098446
+Min seq length            172
+Max seq length            224
+Std seq length            7.25575475559
+Profile emission time     1.15s
+
+<<<<<<<<<<<<.____..............>>>>>>>>>>>>.-...[[[[[,,.<<,,,,,,,,.....<<<<<<<<..____._......>>>>>>>>-...>>.,.,((.((((((,.<<<......>>><<<<....>>>>...<<<._BBBB_>>>,<<<<<<<<<<<<<<<<<._.__....>>>>>>>>>>>>>>>>>.,,<<<<<<..__bbbb..>>>>>>))))))..))....<<<<<<<-----......-<<<<<_.__AAA.A_................>>>>>...---->>>>>>>-.<<<<<..,,aaaa,,,,.>>>>>]]]]]..,,,.
+ 
+Family Name               RAGATH-18
+Source                    Z. Weinberg
+Alignment depth           2548
+Alignment length          150
+Mean seq length           70.5686813187
+Min seq length            58
+Max seq length            104
+Std seq length            6.44238384172
+Profile emission time     6.55s
+
+(((((----(((((........<<<<<<<.................>>>>>>>.<<<......<<<...<<<<<<<<<<<<<<<<<....____...>>>>>>>>>>>>>>>>>,...>>>.,,,,>>>.)))))-.----.-))))),,
+ 
+Family Name               RAGATH-2-HDV
+Source                    Z. Weinberg
+Alignment depth           1618
+Alignment length          431
+Mean seq length           89.0914709518
+Min seq length            51
+Max seq length            279
+Std seq length            28.9081327206
+Profile emission time     11.74s
+
+BBBBBBB......(((.((((<<<..A......>>>bbbbbbba...............<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<..................................................................................................>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.........).).)))))
+ 
+Family Name               chrB-b
+Source                    Z. Weinberg
+Alignment depth           566
+Alignment length          134
+Mean seq length           49.6148409894
+Min seq length            42
+Max seq length            100
+Std seq length            5.91996611699
+Profile emission time     1.28s
+
+<<<<<<........AAAAA...>>>>.>>..........<<<<<<<<<<.............................>>>>>>>>>>.......<<<<<<<<<<.......>>>>>>>>>>.......aaaaa
+ 

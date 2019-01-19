@@ -115,9 +115,7 @@ _, ugSQ, _ = mf.rm_consensus_gaps(X_data, SQ)
 
 
 #Get the sequence and indices of the conserved base pairs
-bpchars = ['(',')','<','>','{','}']
-sig_bpchars = ['<','>']
-bpidx, bpSS, nonbpidx = mf.sigbasepair(SS, bpchars)
+bpidx, bpSS, nonbpidx = mf.sigbasepair(SS)
 numbp = len(bpidx)
 numug = len(ugidx)
 

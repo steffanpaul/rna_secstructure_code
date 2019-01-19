@@ -34,7 +34,16 @@ for fam in famnames:
     Xpos = mf.sto_onehot(simalign_file, 'rna')
     Xpos = np.expand_dims(Xpos, axis=2)
 
-    #GET SEQUENCE DESCRIPTORS USING UNALIGN
+    #secondary structure information
+    SS = mf.getSSconsensus(simalign_file)
+
+    #sequence statistics of unaligned data
+    Xpos_unalign = mf.unalign_full(Xpos[:, :, :, :-1])
+    lengths = [len(x) for x in Xpos_unalign]
+    mean_len = np.mean(lengths)
+    max_len = np.max(lengths)
+    min_len = np.min(lengths)
+    std_len = np.std(lengths)
 
     print ('Open positive control: ' + mf.sectotime(time.time()-starttime))
 
@@ -48,36 +57,42 @@ for fam in famnames:
     dims = dims-1
     Xnegprofile = mf.seq_generator_profile(Xprofile, numpos, seqlen, dims)
 
+    pet = mf.sectotime(time.time() - starttime) #profile emission time
     print ('Making neg control emitted from frequency profile: '
-       + mf.sectotime(time.time() - starttime))
+       + pet)
 
     starttime = time.time()
 
     #rejoin pos and neg controls
     X_data = np.concatenate((Xpos, Xnegprofile), axis=0)
-    numpos, seqlen, _, dims = X_data.shape
+    numdata, seqlen, _, dims = X_data.shape
 
     ################ LABELS ####################
     #make Y data
-    Y_data = np.zeros((numpos, 1))
-    Y_data[:numpos//2, :] = 1.
+    Y_data = np.zeros((numdata, 1))
+    Y_data[:numdata//2, :] = 1.
 
     starttime = time.time()
 
     ################ METADATA ####################
     meta = [['Family Name', fam],
-            ['Source', 'Zwein'],
+            ['Source', 'Z. Weinberg'],
             ['Alignment depth', numpos],
             ['Alignment length', seqlen],
-            ['Mean seq length', ],
-            ['Min seq length', ],
-            ['Max seq length', ],
-            ['Profile emission time', ]]
+            ['Mean seq length', mean_len],
+            ['Min seq length', min_len],
+            ['Max seq length', max_len],
+            ['Std seq length', std_len],
+            ['Profile emission time', pet]]
 
     #print the metadata in a nice way
+    fd = open('zwein_data_details.txt', 'a')
     for item in meta:
-    print ('{0:25} {1:}'.format(item[0], item[1]))
-
+        fd.write('{0:25} {1:}\n'.format(item[0], item[1]))
+    fd.write('\n')
+    fd.write(SS)
+    fd.write('\n \n')
+    fd.close()
 
     ################ SAVE #######################
     #Save dictionaries into h5py files
