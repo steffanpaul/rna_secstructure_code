@@ -116,7 +116,7 @@ print ('numbp:', numbp, 'seqlen:', seqlen)
 params_results = '../../results'
 
 numhidden = int(sys.argv[2])
-modelarch = 'mlp_%s'%(str(numhidden))
+modelarch = 'mlp_d2_%s'%(str(numhidden))
 trial = '%s_full'%(exp)
 modelsavename = '%s_%s'%(modelarch, trial)
 
@@ -126,7 +126,7 @@ if not os.path.isdir(img_folder):
 
 '''BUILD NEURAL NETWORK'''
 
-def cnn_model(input_shape, output_shape):
+def cnn_model(input_shape, output_shape):   #CHANGE
 
 
   # create model
@@ -142,12 +142,20 @@ def cnn_model(input_shape, output_shape):
             'dropout': 0.5,           # if removed, default is no dropout
            }
 
-  layer3 = {'layer': 'dense',
+  layer3 = {'layer': 'dense',        # input, conv1d, dense, conv1d_residual, dense_residual, conv1d_transpose,
+                                      # concat, embedding, variational_normal, variational_softmax, + more
+            'num_units': numhidden,
+            'norm': 'batch',          # if removed, automatically adds bias instead
+            'activation': 'relu',     # or leaky_relu, prelu, sigmoid, tanh, etc
+            'dropout': 0.5,           # if removed, default is no dropout
+           }
+
+  layer4 = {'layer': 'dense',
           'num_units': output_shape[1],
           'activation': 'sigmoid'
           }
 
-  model_layers = [layer1, layer2, layer3]
+  model_layers = [layer1, layer2, layer3, layer4]
 
   # optimization parameters
   optimization = {"objective": "binary",
@@ -248,7 +256,7 @@ if SOMCALC:
   Xdict = test['inputs'][plot_index[:num_summary]]
 
   mean_mut2 = mf.som_average_ungapped_split(Xdict, range(seqlen), arrayspath, nntrainer, sess, split=2, progress='short',
-                                             normalize=False, save=True, layer='dense_1_bias')
+                                             normalize=False, save=True, layer='dense_2_bias')
 
 if SOMVIS:
   #Load the saved data
@@ -288,8 +296,8 @@ if WRITE:
         fd.write('Date,Model Architecture,Hidden Layer Size,Family,NumTrained,Loss,Accuracy,AUC-roc,AUC-pr\n')
         fd.close()
     numtrain = len(train['inputs'])//2
-    metricsline = '%s,%s,%s,%s,%s,%s,%s,%s,%s'%(date, 'mlp', numhidden, exp, numtrain,
-                 loss, mean_vals[0], mean_vals[1], mean_vals[2])
+    metricsline = '%s,%s,%s,%s,%s,%s,%s,%s,%s'%(date, 'mlp deep2', numhidden, exp, numtrain,
+                 loss, mean_vals[0], mean_vals[1], mean_vals[2]) #CHANGE
     fd = open('test_metrics.csv', 'a')
     fd.write(metricsline+'\n')
     fd.close()
