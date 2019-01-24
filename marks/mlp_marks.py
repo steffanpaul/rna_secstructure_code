@@ -47,6 +47,8 @@ if '--somvis' in sys.argv:
 '''DEFINE LOOP'''
 
 exp = sys.argv[1]  #the family analyzed
+if not os.path.isdir(exp):
+    os.mkdir(exp)
 
 #---------------------------------------------------------------------------------------------------------------------------------
 
@@ -55,7 +57,7 @@ exp = sys.argv[1]  #the family analyzed
 starttime = time.time()
 
 #Open data from h5py
-filename = '%../../data_marks/%s/%s_red.hdf5'%(exp, exp)
+filename = '../../data_marks/%s/%s_red.hdf5'%(exp, exp)
 with h5py.File(filename, 'r') as dataset:
     X_data = np.array(dataset['X_data'])
     Y_data = np.array(dataset['Y_data'])

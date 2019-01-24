@@ -8,3 +8,4 @@ families = ['RF00002', 'RF00005', 'RF00010', 'RF00017', 'RF00023', 'RF00050',
 
 for fam in families:
     call(['python', 'mlp_marks.py', fam, '512', '--train', '--test', '--somcalc', '--somvis', '--write'])
+    #call(['python', 'test.py', fam])
