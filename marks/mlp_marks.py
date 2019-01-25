@@ -236,7 +236,9 @@ if SOMCALC:
   if seqlen < 750:
       split = 2
   else:
-      split = 4
+      split = 8
+
+  print ('split', split)
 
   starttime = time.time()
   mean_mut2 = mf.som_average_ungapped_split(Xdict, range(seqlen), arrayspath, nntrainer, sess, split=split, progress='short',
