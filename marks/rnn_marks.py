@@ -90,9 +90,9 @@ Y_train = Y_data[trainidx]
 Y_valid = Y_data[valididx]
 Y_test = Y_data[testidx]
 
-X_train_unalign = mf.unalign_full(X_train)[unalign(X) for X in X_train]
-X_valid_unalign = [unalign(X) for X in X_valid]
-X_test_unalign = [unalign(X) for X in X_test]
+X_train_unalign = mf.unalign_full(X_train)
+X_valid_unalign = mf.unalign_full(X_valid)
+X_test_unalign = mf.unalign_full(X_test)
 
 print ('Data extraction and dict construction completed in: ' + mf.sectotime(time.time() - starttime))
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -233,8 +233,8 @@ if TRAIN:
   sess.run(tf.global_variables_initializer())
 
   batch_size = 128
-  train_batches = helper.bucket_generator(X_train, Y_train, batch_size)
-  valid_batches = helper.bucket_generator(X_valid, Y_valid, batch_size)
+  train_batches = helper.bucket_generator(X_train_unalign, Y_train, batch_size)
+  valid_batches = helper.bucket_generator(X_valid_unalign, Y_valid, batch_size)
 
   numepochs = 2000
   bar_length = 25
@@ -347,7 +347,7 @@ print ('Restoring parameters from: %s'%(params_path))
 #---------------------------------------------------------------------------------------------
 '''TEST'''
 batch_size = 128
-batches, sort_index = helper.bucket_generator(X_test, Y_test, batch_size, index=True)
+batches, sort_index = helper.bucket_generator(X_test_unalign, Y_test, batch_size, index=True)
 num_batches = len(batches)
 
 loss = 0
@@ -406,17 +406,21 @@ plot_index = np.argsort(WT_predictions[:,0])[::-1]
 
 '''SECOND ORDER MUTAGENESIS'''
 #specify how many seqs to average over in SoM
-num_summary = np.min([2000, len(X_test)//2])
+num_summary = np.min([1000, len(X_test)//2])
 
 '''Som Calc'''
 if SOMCALC:
+    def unalign(X):
+        nuc_index = np.where(np.sum(X, axis=1)!=0)
+        return (X[nuc_index])
+
     somstarttime = time.time()
-    def second_order_mutagenesis(sess, predictions, X_val, ugidx):
+    def second_order_mutagenesis(sess, output, X_val, ugidx):
         seqlen, dims = X_val.shape
         idxlen = len(ugidx)
 
         # get wild-type score
-        wt_score = sess.run(predictions, feed_dict={X: np.expand_dims(X_val, axis=0), keep_prob: 1.0})[0]
+        wt_score = sess.run(predictions, feed_dict={X: np.expand_dims(unalign(X_val), axis=0), keep_prob: 1.0})[0]
 
         # generate mutagenesis sequences
         num_mut = idxlen**2*dims**2
@@ -434,11 +438,11 @@ if SOMCALC:
                         k += 1
 
         # get second order mutagenesis score
-        X_mut = [x for x in X_mut]
+        X_mut_unalign = [unalign(x) for x in X_mut]
         mut_scores = []
-        batches = helper.batch_generator(X_mut, batch_size=512, MAX=None, shuffle_data=False)
+        batches = helper.batch_generator(X_mut_unalign, batch_size=512, MAX=None, shuffle_data=False)
         for i, batch in enumerate(batches):
-            batch_predict = sess.run(predictions, feed_dict={X: batch, keep_prob: 1.0})
+            batch_predict = sess.run(output, feed_dict={X: batch, keep_prob: 1.0})
             mut_scores.append(batch_predict)
         mut_scores = np.vstack(mut_scores)
 
@@ -470,7 +474,7 @@ if SOMCALC:
     mutagenesis_logodds = []
     mutagenesis = []
     for i, index in enumerate(plot_index[:N]):
-        logresult, result = second_order_mutagenesis(sess, logits, X_test[index], range(seqlen))
+        logresult, result = second_order_mutagenesis(sess, output=logits, X_val=X_test[index], ugidx=range(seqlen))
         mutagenesis_logodds.append(logresult)
         mutagenesis.append(result)
 
@@ -481,6 +485,14 @@ if SOMCALC:
         spaces = ' '*int(bar_length-round(percent*bar_length))
         sys.stdout.write("\r[%s] %.1f%% -- remaining time=%.2fs" \
         %(progress+spaces, percent*100, remaining_time))
+
+        if i%50 == 0:
+
+            arrayspath_log = 'Arrays/%s_%s_logodds.npy'%(exp, modelarch)
+            np.save(arrayspath_log, mutagenesis_logodds)
+
+            arrayspath = 'Arrays/%s_%s.npy'%(exp, modelarch)
+            np.save(arrayspath, mutagenesis)
 
     sys.stdout.write("\r[%s] %.1f%% -- elapsed time=%.2fs" \
     %(progress+spaces, percent*100, time.time()-start_time))
@@ -493,7 +505,7 @@ if SOMCALC:
     mean_mut2_logodds[idx] = np.min(mean_mut2_logodds)
 
     arrayspath_log = 'Arrays/%s_%s_logodds.npy'%(exp, modelarch)
-    np.save(arrayspath, mean_mut2_logodds)
+    np.save(arrayspath_log, mean_mut2_logodds)
 
     arrayspath = 'Arrays/%s_%s.npy'%(exp, modelarch)
     np.save(arrayspath, mean_mut2)

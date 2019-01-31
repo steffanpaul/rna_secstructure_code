@@ -236,7 +236,7 @@ if SOMCALC:
   if seqlen < 750:
       split = 2
   else:
-      split = 8
+      split = 10
 
   print ('split', split)
 
