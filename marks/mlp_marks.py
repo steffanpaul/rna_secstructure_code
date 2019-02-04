@@ -71,7 +71,7 @@ if ungapped:
     X_data = X_data[:, :, :, :dims]
 
 # get validation and test set from training set
-train_frac = 0.9
+train_frac = 0.8
 valid_frac = 0.1
 test_frac = 1-0.8-valid_frac
 N = numdata
