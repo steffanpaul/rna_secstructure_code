@@ -1,0 +1,21 @@
+RFAM_ID,Name,Length,M,M_eff
+RF00002,5.8S ribosomal RNA,155,375612,1197.3
+RF00005,RNA,73,298470,3533.2
+RF00010,Bacterial RNase P class A,359,6397,1215.1
+RF00017,Metazoan signal recognition particle RNA,300,22685,4358.5
+RF00023,ransfer-messenger RNA,366,5983,1558.9
+RF00050,FMN riboswitch (RFN element),135,4516,367.1
+RF00059,TPP riboswitch (THI element),105,11197,2249.5
+RF00162,SAM riboswitch (S box leader),108,4757,585.7
+RF00167,Purine riboswitch,103,2427,471.1
+RF00169,Bacterial small signal recognition particle RNA,99,5622,637.2
+RF00174,Cobalamin riboswitch,188,9056,3190.6
+RF00234,glmS glucosamine-6-phosphate activated ribozyme,161,842,203.6
+RF00380,ykoK leader,170,1493,92.2
+RF00504,Glycine riboswitch,91,6875,895.1
+RF01734,crcB RNA,65,1267,351.9
+RF01786,Cyclic di-GMP-II riboswitch,86,237,81.6
+RF01831,THF riboswitch,100,598,123.1
+RF01852,Selenocysteine transfer RNA,91,1959,157.2
+RF01960,Eukaryotic small subunit ribosomal RNA,1753,62908,1603.2
+RF02001,Group II catalytic intron D1-D4-3,174,2450,374.0
