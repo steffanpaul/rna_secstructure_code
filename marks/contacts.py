@@ -51,6 +51,54 @@ def g_test(X, batch_size=1024):
     else:
         return clean_diagonal_cmap(calculate_g_test(X, batch_size))
 
+def mutual_information(X, batch_size=1024):
+
+    def clean_diagonal_cmap(M):
+        seq_length = len(M)
+        mu = np.mean(M[np.triu_indices(seq_length, k=2)])
+        for i in range(seq_length):
+            M[i,i] = mu
+        return M
+
+    def calculate_mi(X, batch_size):
+        eps = 1e-7 # small number to prevent indefinite/infinite values
+        N, seq_length, num_alphabet = X.shape
+        M = np.zeros((seq_length, seq_length))
+
+        bg = BatchGenerator(N, batch_size, shuffle=False)
+
+        # loop over first position
+        for i in range(seq_length):
+
+            # loop over second position
+            for j in range(i):
+                resid_i = X[:,i,:]
+                resid_j = X[:,j,:]
+                #f_ij = np.dot(np.transpose(resid_i), resid_j)/N
+                # calculate number of co-occurences of AA
+                f_ij = 0
+                for index in bg.indices:
+                    f_ij += np.dot(np.transpose(resid_i[index]), resid_j[index])
+                f_ij /= N
+
+                f_i = np.sum(f_ij, axis=0, keepdims=True) + 1e-7
+                f_j = np.sum(f_ij, axis=1, keepdims=True) + 1e-7
+                M[i,j] = np.sum(f_ij*np.log(f_ij/(f_i*f_j) + 1e-7))
+
+        # fill out upper symmetric triangle
+        M += M.T
+        return clean_diagonal_cmap(M)
+
+    if isinstance(X, (list, tuple)):
+        num_samples = len(X)
+        mi_list = []
+        for i in range(num_samples):
+            print('MI on sample %d out of %d'%(i+1, num_samples))
+            mi_list.append(clean_diagonal_cmap(calculate_mi(X[i], batch_size)))
+        return mi_list
+    else:
+        return clean_diagonal_cmap(calculate_mi(X, batch_size))
+
 
 def clean_diagonal_cmap(M):
     seq_length = len(M)
