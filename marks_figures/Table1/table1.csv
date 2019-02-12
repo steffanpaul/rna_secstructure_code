@@ -1,0 +1,20 @@
+Rfam ID,Name,Length,M,M_{eff},Accuracy,AUC-roc
+RF00002,5.8S ribosomal RNA,155,375612,1197.3,1.0,1.0
+RF00005,tRNA,73,298470,3533.2,0.999,1.0
+RF00010,Bacterial RNase P class A,359,6397,1215.1,0.999,1.0
+RF00017,Metazoan signal recognition particle RNA,300,22685,4358.5,0.998,1.0
+RF00023,transfer-messenger RNA,366,5983,1558.9,0.999,1.0
+RF00050,FMN riboswitch (RFN element),135,4516,367.1,0.998,1.0
+RF00059,TPP riboswitch (THI element),105,11197,2249.5,0.999,1.0
+RF00162,SAM riboswitch (S box leader),108,4757,585.7,0.995,1.0
+RF00167,Purine riboswitch,103,2427,471.1,0.996,1.0
+RF00169,Bacterial small signal recognition particle RNA,99,5622,637.2,0.996,1.0
+RF00174,Cobalamin riboswitch,188,9056,3190.6,0.997,1.0
+RF00234,glmS glucosamine-6-phosphate activated ribozyme,161,842,203.6,1.0,1.0
+RF00380,ykoK leader,170,1493,92.2,0.997,1.0
+RF00504,Glycine riboswitch,91,6875,895.1,1.0,1.0
+RF01734,crcB RNA,65,1267,351.9,0.933,0.992
+RF01786,Cyclic di-GMP-II riboswitch,86,237,81.6,0.896,0.95
+RF01831,THF riboswitch,100,598,123.1,1.0,1.0
+RF01852,Selenocysteine transfer RNA,91,1959,157.2,0.997,1.0
+RF02001,Group II catalytic intron D1-D4-3,174,2450,374.0,0.996,1.0
