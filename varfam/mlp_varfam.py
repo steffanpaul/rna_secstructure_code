@@ -43,7 +43,7 @@ if '--somvis' in sys.argv:
 
 #---------------------------------------------------------------------------------------------------------------------------------
 '''DEFINE LOOP'''
-trials = ['riboswitch']#['glna', 'trna', 'riboswitch']
+trials = ['trna']#['glna', 'trna', 'riboswitch']
 
 datafiles = {'glna': ['glna_100k_d8.hdf5', '../../data_RFAM/glnAsim_100k.sto'],
               'trna': ['trna_100k_d4.hdf5', '../../data_RFAM/trnasim_100k.sto'],
@@ -264,7 +264,7 @@ for t in trials:
 
   '''Som calc'''
   if SOMCALC:
-    num_summary = 2000
+    num_summary = 500
 
     arrayspath = 'Arraysvar/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
     Xdict = test_align['inputs'][plot_index[:num_summary]]
@@ -274,7 +274,7 @@ for t in trials:
 
   if SOMVIS:
     #Load the saved data
-    num_summary = 2000
+    num_summary = 500
     arrayspath = 'Arraysvar/%s_%s%s_so%.0fk.npy'%(exp, modelarch, trial, num_summary/1000)
     mean_mut2 = np.load(arrayspath)
 
@@ -305,7 +305,7 @@ for t in trials:
 
     som_file = modelsavename + 'SoM_bpfilter' + '.png'
     som_file = os.path.join(img_folder, som_file)
-    plt.savefig(som_file)
+    plt.savefig('test')
     plt.close()
 
 
